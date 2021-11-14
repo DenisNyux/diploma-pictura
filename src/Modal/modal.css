@@ -22,10 +22,17 @@
     padding: 20px;
     border-radius: 12px;
     background-color: rgba(120, 104, 230, 1);
-    width: 30vw;
-    height: 20vw;
+    min-width: 400px;
+    min-height: 300px;
+    width: 20vw;
+    height: 10vw;
     transform: scale(0.5);
     transition: 0.4s all;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
 }
 
 .modal__content.active {

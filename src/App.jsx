@@ -2,11 +2,13 @@ import './App.css';
 import MyNavigation from './Components/MyNavigation';
 import React, { useState } from 'react';
 import Modal from './Modal/Modal';
+import { Form, FormGroup, FormText, Label, Input, Button } from 'reactstrap';
+// const axios = require('axios');
+// import 'bootstrap/dist/css/bootstrap.min.css';
 
-const axios = require('axios');
 
 const App = () => {
-  const [modalActive, setModalActive] = useState(true);
+  const [modalActive, setModalActive] = useState(false);
   const [drag, setDrag] = useState(false);
 
   function dragStartHandler(e) {
@@ -27,31 +29,41 @@ const App = () => {
     //formData.append('file', files[0]);
     //formData.append('userId', 1);
     //axios.post('url', formData);
-    setDrag(false);
-
-    
+    setDrag(false); 
   }
 
     return ( 
       <div className = "App" >
         <div class = "horizontal-nav">
-        <button className='load-btn' onClick = {() => setModalActive(true)}>Открыть окно загрузки</button>
+        <Button className='load-btn' onClick = {() => setModalActive(true)}>Открыть окно загрузки</Button>
 
         </div>
         <Modal active={modalActive} setActive={setModalActive}>
-          
+          <Form>
+            <FormGroup>
+              <Label for="exampleFile">
+                Загрузите файл
+              </Label>
+              <Input
+                id="exampleFile"
+                name="file"
+                type="file"
+              />
+            </FormGroup>
+          </Form>
+          <div className="text-between">или</div>
           {drag
           ? <div className="drop-area"
               onDragStart={e => dragStartHandler(e)}
               onDragLeave={e => dragLeaveHandler(e)}
               onDragOver={e => dragStartHandler(e)}
               onDrop={e => onDropHandler(e)}
-          >Отпустите файлы</div>
+            >Отпустите файл</div>
           : <div className="drop-area"
               onDragStart={e => dragStartHandler(e)}
               onDragLeave={e => dragLeaveHandler(e)}
               onDragOver={e => dragStartHandler(e)}
-              >Перетащите файлы сюда
+            >Перетащите файл сюда
             </div>
         }
         </Modal>

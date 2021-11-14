@@ -23,13 +23,23 @@
 }
 
 .drop-area {
-    width: 70%;
-    height: 30%;
-    position: fixed;
-    top: 55%;
-    left: 16%;
-    border: 2px dotted whitesmoke;
+    border: 2px dotted black;
     display: flex;
     justify-content: center;
     align-items: center;
+    min-width: 15vw;
+    min-height: 10vh;
+    padding: 20px;
+    margin-top: 5%;
+    background-color: rgb(63, 50, 146);
+    color: whitesmoke;
+}
+
+.drop-area {
+    background-color: rgba(255, 255, 255, 0.3);
+    color: black;
+}
+
+Form {
+    display: flex;
 }
