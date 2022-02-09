@@ -14,27 +14,13 @@ export const MySideNav = ({children}) => {
 
     return (
       
-      <SideNav className={classes.sideNav} expanded={isVisible}>
+      <SideNav className={classes.sideNav}>
         <SideNav.Toggle
           onClick={() => {
             setVisible(!isVisible);
           }}
         />
-        <SideNav.Nav defaultSelected="home">
-          <NavItem className={classes.navItem} eventKey="home">
-            <NavIcon>
-            </NavIcon>
-            <NavText>Home</NavText>
-          </NavItem>
-          <NavItem className={classes.navItem} eventKey="placed orders">
-            <NavIcon>
-              <i
-                className="fa fa-fw fa-line-chart"
-                style={{ fontSize: "1.75em" }}
-              />
-            </NavIcon>
-            <NavText>placed orders</NavText>
-          </NavItem>
+        <SideNav.Nav>
           {children}
         </SideNav.Nav>
       </SideNav>

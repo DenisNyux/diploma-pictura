@@ -1,9 +1,20 @@
-.cnvs {
+.cnvs_bg {
+    box-sizing: border-box;
+    cursor: crosshair;
+    background: transparent;
+    position: absolute;
+    left: 80px;
+    top: 20px;
+    z-index: 0
+}
+
+.cnvs_fg {
     box-sizing: border-box;
     border: 1px solid #e0e0e0;
     cursor: crosshair;
-    float: right;
     background: transparent;
     position: absolute;
-    left: 65px;
+    left: 80px;
+    top: 20px;
+    z-index: 1;
 }
