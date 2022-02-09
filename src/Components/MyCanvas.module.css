@@ -1,0 +1,9 @@
+.cnvs {
+    box-sizing: border-box;
+    border: 1px solid #e0e0e0;
+    cursor: crosshair;
+    float: right;
+    background: transparent;
+    position: absolute;
+    left: 65px;
+}
