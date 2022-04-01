@@ -1,18 +1,18 @@
 .dropdown {
     position: absolute;
     top: 0px;
-    left: 375px;
     width: 300px;
     transform: translate(-45%);
     background-color: rgb(192, 159, 223);
     padding: 1rem;
     overflow: hidden;
+    transition: background 1s;
+    left: 375px;
 }
 
 .menu_item {
     height: 50px;
     display: flex;
     align-items: center;
-    transition: ease-out 5s;
     padding: 0.5rem;
 }

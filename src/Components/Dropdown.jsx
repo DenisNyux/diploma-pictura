@@ -4,8 +4,7 @@ export const Dropdown = ({children}) => {
       return (
         <div className={classes.dropdown}>
           {children}
-        </div>
-       
+        </div> 
       );
   }
   

@@ -18,3 +18,31 @@
     top: 20px;
     z-index: 1;
 }
+
+.drpdwn {
+    position: absolute;
+    top: 0px;
+    width: 300px;
+    transform: translate(-45%);
+    background-color: rgb(192, 159, 223);
+    padding: 1rem;
+    overflow: hidden;
+    transition: background 1s;
+    left: 199px;
+}
+
+.drpdwn-active {
+    position: absolute;
+    top: 0px;
+    width: 300px;
+    transform: translate(-45%);
+    background-color: rgb(192, 159, 223);
+    padding: 1rem;
+    overflow: hidden;
+    transition: background 1s;
+    left: 375px;
+}
+
+.cnvs_save {
+    display: none;
+}

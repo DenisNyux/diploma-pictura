@@ -1,13 +1,7 @@
 import "@trendmicro/react-sidenav/dist/react-sidenav.css";
 import React, { useState } from 'react';
 import classes from './MySideNav.module.css';
-import SideNav, {
-  Toggle,
-  Nav,
-  NavItem,
-  NavIcon,
-  NavText
-} from "@trendmicro/react-sidenav";
+import SideNav from "@trendmicro/react-sidenav";
 
 export const MySideNav = ({children}) => {
   const [isVisible, setVisible] = useState(true);

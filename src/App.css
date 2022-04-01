@@ -1,55 +1,90 @@
-* {
-    padding: 0;
-    margin: 0;
-    box-sizing: border-box;
-}
-
-.App {
-    background-color: #EDEEF7;
-    min-height: 100vh;
-    min-width: 100vh;
-}
-
-.App-link {
-    color: #61dafb;
-}
-
-#brushBtn {
-    background-image: url('/src/Components/UI/button/brush.png');
-}
-
-.load-btn {
-    margin: 10px 20px;
-    padding: 10px;
-    font-weight: 600;
-}
-
-.drop-area {
-    border: 2px dotted black;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-width: 15vw;
-    min-height: 10vh;
-    padding: 20px;
-    margin-top: 5%;
-    background-color: rgb(92, 78, 180);
-    border-radius: 12px;
-}
-
-.drop-area:hover {
-    background-color: rgba(255, 255, 255, 0.3);
-}
-
-Form {
-    display: flex;
-}
-
-canvas {
-    width: 100%;
-    height: 100%;
-}
-
-.icon {
-    width: 30px;
-}
+    * {
+        padding: 0;
+        margin: 0;
+        box-sizing: border-box;
+    }
+    
+    body {
+        background-color: #EDEEF7;
+    }
+    
+    .App {
+        background-color: #EDEEF7;
+        min-height: 100vh;
+        min-width: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .App-link {
+        color: #61dafb;
+    }
+    
+    .load-btn {
+        margin: 10px 20px;
+        padding: 10px;
+        font-weight: 600;
+    }
+    
+    .drop-area {
+        border: 2px dotted black;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-width: 15vw;
+        min-height: 10vh;
+        padding: 20px;
+        margin-top: 5%;
+        background-color: rgb(92, 78, 180);
+        border-radius: 12px;
+    }
+    
+    .drop-area:hover {
+        background-color: rgba(255, 255, 255, 0.3);
+    }
+    
+    .MyCanvas {
+        display: none;
+        background-color: #EDEEF7;
+    }
+    
+    .icon {
+        width: 30px;
+    }
+    
+    .authWindow {
+        display: flex;
+        background-color: blueviolet;
+        border-radius: 12px;
+        justify-content: center;
+        align-items: center;
+        min-width: 400px;
+        min-height: 300px;
+        width: 20vw;
+        height: 10vw;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        font-weight: bold;
+        color: whitesmoke;
+    }
+    
+    a {
+        color: blueviolet;
+        font-weight: bold;
+        text-decoration: none;
+    }
+    
+    a:hover {
+        color: blueviolet;
+    }
+    
+    #login {
+        background-color: rgb(217, 171, 226);
+    }
+    
+    #login:hover {
+        background-color: whitesmoke;
+    }
