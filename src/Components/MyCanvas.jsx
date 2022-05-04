@@ -15,10 +15,10 @@ import iconTri from './triangle.svg';
 import iconCircle from './circle.svg';
 import React, { useState } from 'react';
 import Modal from './Modal/Modal';
-import { Form, FormGroup, Label, Input, Button, Dropdown, DropdownToggle, DropdownItem, DropdownMenu} from 'reactstrap';
+import { Form, FormGroup, Label, Input, Button} from 'reactstrap';
 import { HexColorPicker } from "react-colorful";
 import myimg from './456.PNG';
-//import "react-colorful/dist/index.css";
+
 
 
 
@@ -409,7 +409,7 @@ export const MyCanvas = () => {
         	}
         	</Modal>
 			<Modal active={rotateModalActive} setActive={setRotateModalActive}>
-          		<Button ><img src="" alt="rotateOnClock" /></Button>
+          		<Button><img src="" alt="rotateOnClock" /></Button>
         	</Modal>
 			<Modal active={brushModalActive} setActive={setBrushModalActive}>
 			<div>Размер</div>
