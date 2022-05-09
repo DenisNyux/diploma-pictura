@@ -19,30 +19,24 @@
     z-index: 1;
 }
 
-.drpdwn {
-    position: absolute;
-    top: 0px;
-    width: 300px;
-    transform: translate(-45%);
-    background-color: rgb(192, 159, 223);
-    padding: 1rem;
-    overflow: hidden;
-    transition: background 1s;
-    left: 199px;
-}
-
-.drpdwn-active {
-    position: absolute;
-    top: 0px;
-    width: 300px;
-    transform: translate(-45%);
-    background-color: rgb(192, 159, 223);
-    padding: 1rem;
-    overflow: hidden;
-    transition: background 1s;
-    left: 375px;
-}
-
 .cnvs_save {
     display: none;
+}
+
+.button {
+    background-color: white;
+    color: rgb(36, 23, 48);
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    background-color: rgb(44, 10, 107);
+    border-radius: 10px;
+    width: 15px;
+    height: 15px;
+}
+
+#rotate {
+    width: 5vw;
+    height: 5vh;
 }

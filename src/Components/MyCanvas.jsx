@@ -13,11 +13,16 @@ import iconEraser from './eraser.svg';
 import iconRect from './square.svg';
 import iconTri from './triangle.svg';
 import iconCircle from './circle.svg';
+import iconRotate from './rotate.svg';
+import iconCrop from './crop.svg';
+import iconUndo from './undo.svg';
+import iconCounterclock from './arrow-counterclockwise.svg';
+import iconClockwise from './arrow-clockwise.svg';
 import React, { useState } from 'react';
 import Modal from './Modal/Modal';
 import { Form, FormGroup, Label, Input, Button} from 'reactstrap';
 import { HexColorPicker } from "react-colorful";
-import myimg from './456.PNG';
+import myimg from './789.png';
 
 
 
@@ -28,13 +33,12 @@ export const MyCanvas = () => {
 	const [eraseModalActive, setEraseModalActive] = useState(false);
 	const [drag, setDrag] = useState(false); // состояние перетаскивания
 	const [rotateModalActive, setRotateModalActive] = useState(false);
-	const [openEr,setOpenErase] = useState(false); // состояние dropdown кисти
-	const [openBr,setOpenBrush] = useState(false); // состояние dropdown ластика
 	const [brushVal, setBrushVal] = useState(10); // состояние размера кисти
 	const [eraseVal, setEraseVal] = useState(20); // состояние размера ластика
   	//const [navState, setNavState] = useState(false)
-	const [color, setColor] = useState("#aabbcc"); //состояние палитры
+	const [color, setColor] = useState("#000000"); //состояние палитры
 	
+
 	function dragStartHandler(e) {
     	e.preventDefault();
     	setDrag(true); 
@@ -104,6 +108,7 @@ export const MyCanvas = () => {
 		let mouseX = 0;
 		let mouseY = 0;
 		let isDrawing = false;
+	
 
 		const setMouseCoordinates = (e) => {
 			mouseX = e.offsetX;
@@ -114,12 +119,13 @@ export const MyCanvas = () => {
 			setMouseCoordinates(e);
 			isDrawing = true;
 			ctxFg.beginPath();
-			ctxFg.moveTo(mouseX, mouseY);
-			
 			points.push({
 			x: mouseX,
 			y: mouseY,
-			mode: "begin"
+			size:ctxFg.lineWidth,
+			color:ctxFg.strokeStyle,
+			mode: "begin",
+			eraseMode: ctxFg.globalCompositeOperation
 			});
 		}
 		
@@ -131,20 +137,27 @@ export const MyCanvas = () => {
 				   points.push({
 					x: mouseX,
 					y: mouseY,
-					mode: "draw"
+					size:ctxFg.lineWidth,
+					color:ctxFg.strokeStyle,
+					mode: "draw",
+					eraseMode: ctxFg.globalCompositeOperation
 				});					
 			}
 		}
 
 		const mouseUp = (e) => {
 			setMouseCoordinates(e);
-			isDrawing = false;
-			
+			if (isDrawing === true) {
 			points.push({
 				x: mouseX,
 				y: mouseY,
-				mode: "end"
+				size:ctxFg.lineWidth,
+				color:ctxFg.strokeStyle,
+				mode: "end",
+				eraseMode: ctxFg.globalCompositeOperation
 			});
+			isDrawing = false;
+			}
 		}
 		// Обработчики рисования мышкой
 		const brushFunc = () => {
@@ -153,6 +166,7 @@ export const MyCanvas = () => {
 			canvasFg.addEventListener('mousedown', mouseDown);
 			canvasFg.addEventListener('mousemove', mouseMove);
 			canvasFg.addEventListener('mouseup', mouseUp);
+			console.log(points);
 		}
 		let coord = [];
 
@@ -267,9 +281,59 @@ export const MyCanvas = () => {
 			ctxFg.globalCompositeOperation = 'destination-out';
 		})
 
-		
+		function redrawAll(){
+
+			if(points.length===0){return;}
+	
+			ctxFg.clearRect(0,0,canvasFg.width,canvasFg.height);
+	
+			for(let i=0;i<points.length;i++){
+	
+			  let pt=points[i];
+	
+			  if(ctxFg.lineWidth!==pt.size){
+				  ctxFg.lineWidth=pt.size;
+			  }
+			  if(ctxFg.strokeStyle!==pt.color){
+				  ctxFg.strokeStyle=pt.color;
+			  }
+			  if(ctxFg.globalCompositeOperation!==pt.eraseMode){
+				ctxFg.globalCompositeOperation=pt.eraseMode;
+				}
+			  if(pt.mode==="begin"){
+				  ctxFg.beginPath();
+				  ctxFg.moveTo(pt.x,pt.y);
+			  }
+			  ctxFg.lineTo(pt.x,pt.y);
+			  if(pt.mode === "end" || (i===points.length-1)){
+				  ctxFg.stroke();
+			  }
+			}
+
+			ctxFg.stroke();
+		}
+	
+		function undoLast(){
+			//console.log(points);
+			points.pop();
+			//console.log(points);
+			redrawAll();
+		}
+		const undoBtn = document.querySelector('#undo');
+		let interval;
+		const undoFuncDown = () => {
+		interval = setInterval(undoLast, 10);
+		}
+		const undoFuncUp = () => {
+			clearInterval(interval);
+			if(points.length!==0){points[points.length-1].mode =  "end";}
+		}
+
+		undoBtn.addEventListener('mousedown', undoFuncDown);
+		undoBtn.addEventListener('mouseup', undoFuncUp);
     });
 
+	
 	// функция изменяющая размер кисти через ползунок
 	const changeBrushSize = () => {
 		const canvasFg = document.getElementById("fg");
@@ -323,6 +387,11 @@ export const MyCanvas = () => {
     return (
         <div>
 			<MySideNav>
+				<NavItem id="undo">
+					<NavIcon><img className='icon1' alt='icon1' src={iconUndo}></img></NavIcon>
+					<NavText>Отменить действие</NavText>
+				
+				</NavItem>
           		<NavItem className="navItem" onClick = {() => setLoadModalActive(true)}>
             		<NavIcon><img className='icon1' alt='icon1' src={iconLoad}></img></NavIcon>
 					<NavText>Загрузить</NavText>
@@ -358,18 +427,18 @@ export const MyCanvas = () => {
 				</NavItem>
 
 				<NavItem className="navItem" id='rotateBtn' onClick = {() => setRotateModalActive(true)}>
-            		<NavIcon><img className='icon1' alt='rotate' src={iconCircle}></img></NavIcon>
+            		<NavIcon><img className='icon1' alt='rotate' src={iconRotate}></img></NavIcon>
 					<NavText>Поворот</NavText>
 				</NavItem>
 
 				<NavItem className="navItem" id='cropBtn'>
-            		<NavIcon><img className='icon1' alt='crop' src={iconCircle}></img></NavIcon>
+            		<NavIcon><img className='icon1' alt='crop' src={iconCrop}></img></NavIcon>
 					<NavText>Обрезка</NavText>
 				</NavItem>
         	</MySideNav>  
         
             <form id="form" action="" method="post">
-	            <div className="paint-canvas"  onMouseOver = {() => {setOpenBrush(false); setOpenErase(false)}} >
+	            <div className="paint-canvas">
 		            <canvas id='bg' className={classes.cnvs_bg}></canvas>
 					<canvas id='fg' className={classes.cnvs_fg}></canvas>
 					<canvas id='readyimg' className={classes.cnvs_save}></canvas>
@@ -408,8 +477,9 @@ export const MyCanvas = () => {
             </div>
         	}
         	</Modal>
-			<Modal active={rotateModalActive} setActive={setRotateModalActive}>
-          		<Button><img src="" alt="rotateOnClock" /></Button>
+			<Modal id="rotate" active={rotateModalActive} setActive={setRotateModalActive}>
+          		<Button className={classes.button}><img src={iconClockwise} alt="rotateOnClock" /></Button>
+				<Button className={classes.button}><img src={iconCounterclock} alt="rotateOnClock" /></Button>
         	</Modal>
 			<Modal active={brushModalActive} setActive={setBrushModalActive}>
 			<div>Размер</div>
@@ -426,7 +496,7 @@ export const MyCanvas = () => {
 					
 									<div>Цвет</div> 
 									<HexColorPicker color={color} onChange={setColor}/>
-									<Button onClick={changeBrushColor}>Поменять цвет</Button>	
+									<Button className={classes.button} onClick={changeBrushColor}>Поменять цвет</Button>	
 						
         	</Modal>
 			<Modal active={eraseModalActive} setActive={setEraseModalActive}>

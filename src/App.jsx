@@ -3,7 +3,7 @@ import MyCanvas from './Components/MyCanvas';
 import { BrowserRouter as Router, Routes, Route}
     from 'react-router-dom';
 
-import { Form, FormGroup, Label, FormFeedback, FormText, Input, Button } from 'reactstrap';
+import { Form, FormGroup, Label, Input, Button } from 'reactstrap';
 
 const App = () => {
     
