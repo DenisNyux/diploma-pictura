@@ -1,0 +1,8 @@
+.NavBtn {
+    padding: 5px 15px;
+    width: 32px;
+    height: 32px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+}
