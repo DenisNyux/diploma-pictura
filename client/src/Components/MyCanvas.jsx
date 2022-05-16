@@ -303,20 +303,6 @@ export const MyCanvas = () => {
 	}
 
 	async function handleSubmit(event) {
-		
-		// var myHeaders = new Headers();
-		// myHeaders.append("Content-Type", "application/x-www-form-urlencoded");
-
-		// var urlencoded = new URLSearchParams();
-		// urlencoded.append("base64image", encoded);
-		// urlencoded.append("image_name", filename);
-
-		// var requestOptions = {
-		// 	method: 'POST',
-		// 	headers: myHeaders,
-		// 	body: urlencoded,
-		// 	redirect: 'follow'
-		// };
 		event.preventDefault();
 		const requestOptions = prepareRequestOptions([["base64image", encoded], ["image_name", filename]])
 		const result= await fetch(API_URL, requestOptions)
@@ -380,19 +366,6 @@ export const MyCanvas = () => {
 			resolve('FG image was drawn on canvas')
 			reject('Canvas error occured')
 		} 
-		
-		// ctxBg.canvas.width  = new_img.width;
-		// ctxBg.canvas.height = new_img.height;
-		// ctxFg.canvas.width  = new_img.width;
-		// ctxFg.canvas.height = new_img.height;
-		// ctxSave.canvas.width  = new_img.width;
-		// ctxSave.canvas.height = new_img.height;
-		// try {ctxFg.drawImage(new_img, 0, 0);}
-		// catch(er) {
-		// 	console.log(er)
-		// }
-		// resolve(new_img)
-		// reject('Canvas error occured')
 	})
 
 
@@ -484,61 +457,7 @@ export const MyCanvas = () => {
 		.catch(error => console.log(`error occured on sending rotate req`));
 		await loadImgToFgCv(fgResult.bs64img, fgResult.meta.width, fgResult.meta.height, fgResult.meta.format)
 		.then((x)=>console.log(x));
-
-
-		// const pic = await uniteCanvasas().then(img=> img);
-		// console.log(pic)
-		
-		// var myHeaders = new Headers();
-		// myHeaders.append("Content-Type", "application/x-www-form-urlencoded");
-
-		// var urlencoded = new URLSearchParams();
-		// urlencoded.append("image_name", "img");
-		// urlencoded.append("base64image", "");
-		// urlencoded.append("angle", angle);
-
-		// var requestOptions = {
-		// method: 'POST',
-		// headers: myHeaders,
-		// body: urlencoded,
-		// redirect: 'follow'
-		// };
-
-		// const result = await fetch(API_URL + "/rotate", requestOptions)
-		// .then(response => response.json())
-		// .catch(error => console.log(`error occured`));
-		
-		// await loadImgToBgCv(result.bs64img, result.meta.width, result.meta.height, result.meta.format)
-	
 	}
-
-	
-
-	//
-
-	// функция пребразования canvas в img
-	// const getImageFromCanvas = canvas => {
-	// 	return new Promise((resolve, reject) => {
-	// 	  const img = new Image();
-	// 	  img.src = canvas.toDataURL();
-	// 	  img.onload = () => resolve(img);
-	// 	  img.onerror = () => reject(new Error(`load fail`));
-	// 	});
-	//   };
-
-	// const drawCanvasOnSave = (canvas) =>{
-	// 	const canvasSaveCtx = document.getElementById("readyimg").getContext('2d');
-	// 	return getImageFromCanvas(canvas).then(img => canvasSaveCtx.drawImage(img, 0, 0));
-	// }
-
-	// const uniteCanvasas = () => {
-	// 	const canvasFg = document.getElementById("fg");
-	// 	const canvasBg = document.getElementById("bg");
-	// 	const canvasSave = document.getElementById("readyimg");
-	// 	drawCanvasOnSave(canvasBg);
-	// 	drawCanvasOnSave(canvasFg);
-	// 	return getImageFromCanvas(canvasSave)
-	// }
 
 
 	const getImage = canvas =>{
@@ -549,14 +468,6 @@ export const MyCanvas = () => {
     	return image;
 	}
 
-	// const getImage = canvas => new Promise((resolve, reject) =>{
-		// 	let imageData = canvas.toDataURL();
-		// 	let image = new Image();
-		// 	image.src = imageData;
-		// 	// image.crossOrigin = 'Anonymous'
-		// 	resolve(image);
-		// 	reject('failed to load pic from canvas')
-		// })
 
 	// функция изменяющая размер кисти через ползунок
 	const changeBrushSize = () => {
@@ -702,7 +613,7 @@ export const MyCanvas = () => {
         	}
         	</Modal>
 			<Modal active={rotateModalActive} setActive={setRotateModalActive}>
-          		<Button className={classes.button}><img src={iconClockwise} onClick={()=>rotateImage("90")} alt="rotateOnClock" /></Button>
+          		<Button className={classes.button}><img src={iconClockwise} onClick={()=>rotateImage("")} alt="rotateOnClock" /></Button>
 				<Button className={classes.button}><img src={iconCounterclock} onClick={()=>rotateImage("270")} alt="rotateOnClock" /></Button>
         	</Modal>
 			<Modal active={brushModalActive} setActive={setBrushModalActive}>

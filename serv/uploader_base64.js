@@ -14,34 +14,6 @@ const { json } = require('body-parser');
 const router = express.Router();
 router.use(bodyParser.urlencoded({ extended: true, limit: '10mb'}));
 
-// Атомизировать
-// async function base_converter(img_base) {
-//     const buf = Buffer.from(img_base, 'base64');
-//     const meta = await get_meta(buf);
-//     const format = meta.format;
-//     const img_name = uuidv4();
-//     return {
-//         "img_name": img_name,
-//         "format": format,
-//         "meta": meta,
-//         "buf": buf,
-//         "bs64img": img_base 
-//     }
-// }
-
-// function json_output(file_name) {
-//     const buf = fs.readFileSync(file_name);
-//     const meta = await get_meta(buf);
-//     const format = meta.format;
-//     return {
-//         "img_name": file_name,
-//         "format": format,
-//         "meta": meta,
-//         "buf": buf,
-//         "bs64img": img_base 
-//     }
-// }
-
 async function json_res(file_path, file_name) {
     const file_buf = fs.readFileSync(file_path);
     const meta = await get_meta(file_buf);
@@ -53,24 +25,26 @@ async function json_res(file_path, file_name) {
 }
 
 router.post('/', async (req, res) => {
-    console.log(req.body.base64image.substr(0, 100));
+    // console.log(req.body.base64image.substr(0, 100));
     const req_img_buf = Buffer.from(req.body.base64image, 'base64');
     const file_to_write_name = uuidv4() + '.png';
     const file_to_write_path = path.join(__dirname, './static/uploads/') + file_to_write_name;
     console.log(file_to_write_path)
     fs.writeFileSync(file_to_write_path, req_img_buf);
     res.status(200).json(await json_res(file_to_write_path, req.body.image_name))
+    fs.unlinkSync(file_to_write_path);
 });
 
 router.post('/rotate', async (req, res) => {
     const rotate = require('./image_processing/rotator');
-    console.log(req.body.base64image.substr(0, 10));
+    // console.log(req.body.base64image.substr(0, 10));
     const req_img_buf = Buffer.from(req.body.base64image, 'base64');
     const file_to_write_name = uuidv4() + '-rotated.png';
     const file_to_write_path = path.join(__dirname, './static/uploads/') + file_to_write_name;
     await rotate(req_img_buf, file_to_write_path, Number(req.body.angle));
     console.log('its fine')
     res.status(200).json(await json_res(file_to_write_path, req.body.image_name));
+    fs.unlinkSync(file_to_write_path);
 })
 
 
