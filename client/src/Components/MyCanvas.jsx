@@ -18,6 +18,7 @@ import iconCrop from './crop.svg';
 import iconUndo from './undo.svg';
 import iconCounterclock from './arrow-counterclockwise.svg';
 import iconClockwise from './arrow-clockwise.svg';
+import iconFilter from './asterisk.svg';
 import React, { useState } from 'react';
 import Modal from './Modal/Modal';
 import { Form, FormGroup, Label, Input, Button, Dropdown, DropdownToggle, DropdownItem, DropdownMenu} from 'reactstrap';
@@ -28,9 +29,11 @@ import myimg from './456.PNG';
 
 
 export const MyCanvas = () => {
-	const [loadModalActive, setLoadModalActive] = useState(false); // состояние модального окна
+	const [loadModalActive, setLoadModalActive] = useState(true); // состояние модального окна
 	const [brushModalActive, setBrushModalActive] = useState(false); 
 	const [eraseModalActive, setEraseModalActive] = useState(false);
+	const [cropModalActive, setCropModalActive] = useState(false);
+	const [filterModalActive, setFilterModalActive] = useState(false);
 	const [drag, setDrag] = useState(false); // состояние перетаскивания
 	const [rotateModalActive, setRotateModalActive] = useState(false);
 	const [openEr,setOpenErase] = useState(false); // состояние dropdown кисти
@@ -305,14 +308,14 @@ export const MyCanvas = () => {
 	async function handleSubmit(event) {
 		event.preventDefault();
 		const requestOptions = prepareRequestOptions([["base64image", encoded], ["image_name", filename]])
-		const result= await fetch(API_URL, requestOptions)
+		const result = await fetch(API_URL, requestOptions)
 		.then(response =>
 			response.json())
 		.catch(error => console.log(`error occured`));
 		await resizeCanvases(result.meta.width, result.meta.height).then(x=>console.log(x));
 		await loadImgToBgCv(result.bs64img, result.meta.width, result.meta.height, result.meta.format)
 		.then((x)=>console.log(x))
-		
+		setLoadModalActive(false);
 	}
 
 	const getBase64 = (file) => new Promise(function (resolve, reject) {
@@ -409,7 +412,7 @@ export const MyCanvas = () => {
 			response.json())
 		.catch(error => console.log(`error occured`));
 		await loadImgToBgCv(result.bs64img, result.meta.width, result.meta.height, result.meta.format)
-	
+		setLoadModalActive(false);
   	}
 
 	const prepareRequestOptions = (searchParams) =>  {
@@ -566,9 +569,13 @@ export const MyCanvas = () => {
 					<NavText>Поворот</NavText>
 				</NavItem>
 
-				<NavItem className="navItem" id='cropBtn'>
+				<NavItem className="navItem" id='cropBtn' onClick = {() => setCropModalActive(true)}>
             		<NavIcon><img className='icon1' alt='crop' src={iconCrop}></img></NavIcon>
 					<NavText>Обрезка</NavText>
+				</NavItem>
+				<NavItem className="navItem" id='filterBtn' onClick = {() => setFilterModalActive(true)}>
+            		<NavIcon><img className='icon1' alt='filter' src={iconFilter}></img></NavIcon>
+					<NavText>Фильтры</NavText>
 				</NavItem>
         	</MySideNav>  
         
@@ -584,69 +591,111 @@ export const MyCanvas = () => {
           		<Form onSubmit={handleSubmit} encType="multipart/form-data" method="post">
             		<FormGroup>
               			<Label for="loadFile">
-                		Загрузите файл
+                			Загрузите файл
               			</Label>
               			<Input
-                		id="loadFile"
-                		type="file"
-						onChange={handleChange}
+                			id="loadFile"
+                			type="file"
+							onChange={handleChange}
               			/>
 						<Button>
     						Загрузить
   						</Button>
             		</FormGroup>
           		</Form>
-          	<div className="text-between">или</div>
-          	{drag
-          	? <div className="drop-area"
-              onDragStart={e => dragStartHandler(e)}
-              onDragLeave={e => dragLeaveHandler(e)}
-              onDragOver={e => dragStartHandler(e)}
-              onDrop={e => onDropHandler(e)}
-            >Отпустите файл</div>
-          	: <div className="drop-area"
-              onDragStart={e => dragStartHandler(e)}
-              onDragLeave={e => dragLeaveHandler(e)}
-              onDragOver={e => dragStartHandler(e)}
-            >Перетащите файл сюда
-            </div>
-        	}
+          		<div className="text-between">или</div>
+          	    	{drag
+          	    	? <div className="drop-area"
+                  	onDragStart={e => dragStartHandler(e)}
+                  	onDragLeave={e => dragLeaveHandler(e)}
+                  	onDragOver={e => dragStartHandler(e)}
+                  	onDrop={e => onDropHandler(e)}
+                	>Отпустите файл</div>
+          	    	: <div className="drop-area"
+                  	onDragStart={e => dragStartHandler(e)}
+                  	onDragLeave={e => dragLeaveHandler(e)}
+                  	onDragOver={e => dragStartHandler(e)}
+                	>Перетащите файл сюда
+                	</div>
+        	    	}
         	</Modal>
 			<Modal active={rotateModalActive} setActive={setRotateModalActive}>
-          		<Button className={classes.button}><img src={iconClockwise} onClick={()=>rotateImage("")} alt="rotateOnClock" /></Button>
+				<Form>
+					<FormGroup>
+						<Label for="angle">Введите угол поворота</Label>
+						<Input
+							id="angle"
+							name="angle"
+							type="text"
+						/>
+					</FormGroup>
+					<Button>Ок</Button>
+				</Form>
+          		<Button className={classes.button}><img src={iconClockwise} onClick={()=>rotateImage("90")} alt="rotateOnClock" /></Button>
 				<Button className={classes.button}><img src={iconCounterclock} onClick={()=>rotateImage("270")} alt="rotateOnClock" /></Button>
         	</Modal>
 			<Modal active={brushModalActive} setActive={setBrushModalActive}>
-			<div>Размер</div>
-			<Input
-      									id="brushSize"
-      									name="range"
-      									type="range"
-										min="0" 
-										max="100"
-										onChange={changeBrushSize}
-										value={brushVal}
-    								/>
-							
-					
-									<div>Цвет</div> 
-									<HexColorPicker color={color} onChange={setColor}/>
-									<Button onClick={changeBrushColor}>Поменять цвет</Button>	
-						
+				<div>Размер</div>
+				<Input
+      				id="brushSize"
+      				type="range"
+					min="0" 
+					max="100"
+					onChange={changeBrushSize}
+					value={brushVal}
+    			/>		
+				<div>Цвет</div> 
+				<HexColorPicker color={color} onChange={setColor}/>
+				<Button onClick={changeBrushColor}>Поменять цвет</Button>	
         	</Modal>
 			<Modal active={eraseModalActive} setActive={setEraseModalActive}>
 			 <div>Размер</div>
-									<Input
-      									id="eraseSize"
-      									name="range"
-      									type="range"
-										min="0" 
-										max="100"
-										onChange={changeEraseSize}
-										value={eraseVal}
-    								/>	
-						
+				<Input
+      				id="eraseSize"
+      				type="range"
+					min="0" 
+					max="100"
+					onChange={changeEraseSize}
+					value={eraseVal}
+    			/>		
         	</Modal>
+			<Modal active={cropModalActive} setActive={setCropModalActive}>
+				<Form>
+					<FormGroup>
+						<Input
+							id="inp1"
+							type="text"
+						/>
+						<Input
+							id="inp2"
+							type="text"
+						/>
+						<Input
+							id="inp3"
+							type="text"
+						/>
+						<Input
+							id="inp4"
+							type="text"
+						/>
+					</FormGroup>
+					<Button>Обрезать</Button>
+				</Form>
+			</Modal>
+
+			<Modal active={filterModalActive} setActive={setFilterModalActive}>
+				<Form>
+					<FormGroup>
+						<Label for="gauss">Размытие по Гауссу</Label>
+						<Input
+							id="gauss"
+							name="gauss"
+							type="text"
+						/>
+					</FormGroup>
+					<Button>Ок</Button>
+				</Form>
+			</Modal>
 		</div>  
       );
   }
