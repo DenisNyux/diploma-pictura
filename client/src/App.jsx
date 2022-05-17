@@ -9,7 +9,7 @@ const App = () => {
     
   return ( 
       <div className = "App">
-        <div className='authWindow'>
+        {/* <div className='authWindow'>
           <Form id="auth">
             <FormGroup>
               <Label for="exampleEmail">
@@ -42,7 +42,8 @@ const App = () => {
           <Routes>
             <Route path='/canvas' element={<MyCanvas />} />
           </Routes>
-        </Router>
+        </Router> */}
+        <MyCanvas />
       </div>
     );
 };

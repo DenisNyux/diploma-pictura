@@ -40,13 +40,13 @@ export const MyCanvas = () => {
 	const [openBr,setOpenBrush] = useState(false); // состояние dropdown ластика
 	const [brushVal, setBrushVal] = useState(10); // состояние размера кисти
 	const [eraseVal, setEraseVal] = useState(20); // состояние размера ластика
-  	//const [navState, setNavState] = useState(false)
 	const [color, setColor] = useState("#aabbcc"); //состояние палитры
+	const [angleValue, setAngleValue] = useState("0"); // состояние угла
 	const API_URL = "http://localhost:3030/api"
 	
 
     window.addEventListener("load", function onWindowLoad(){
-		document.querySelector('.authWindow').style.display = 'none';
+		//document.querySelector('.authWindow').style.display = 'none';
         const canvasBg = document.getElementById("bg");
         const ctxBg = canvasBg.getContext("2d");
         const canvasFg = document.getElementById("fg");
@@ -150,11 +150,11 @@ export const MyCanvas = () => {
 			removeListeners();
 			canvasFg.addEventListener('click', mouseRectCoordEvent);
 		}
+
 		const circleFunc = () => {
 			removeListeners();
 			canvasFg.addEventListener('click', mouseCircleCoordEvent);
 		}
-
 
 		const mouseTriCoordEvent = (e) => {
 			console.log(coord);
@@ -495,6 +495,11 @@ export const MyCanvas = () => {
 		const ctxFg = canvasFg.getContext("2d");
 		ctxFg.strokeStyle = color;
 	}
+
+	const changeAngle = () => {
+		const angleInp = document.getElementById('angle');
+		setAngleValue(angleInp.value);
+	}
 	//сохранение изображения
 	const saveImage = (image) => {
 		var link = document.createElement("a");
@@ -598,7 +603,7 @@ export const MyCanvas = () => {
                 			type="file"
 							onChange={handleChange}
               			/>
-						<Button>
+						<Button className={classes.button}>
     						Загрузить
   						</Button>
             		</FormGroup>
@@ -627,12 +632,17 @@ export const MyCanvas = () => {
 							id="angle"
 							name="angle"
 							type="text"
+							onChange={changeAngle}
+							value={angleValue}
 						/>
 					</FormGroup>
-					<Button>Ок</Button>
+					<Button className={classes.button_form} onClick={()=>rotateImage(angleValue)} >Ок</Button>
+				
+					<FormGroup>
+					<Button className={classes.button}><img src={iconClockwise} onClick={()=>rotateImage("90")} id="clockwise" alt="rotateOnClock" />Поворот на 90</Button><br/>
+					<Button className={classes.button}><img src={iconCounterclock} onClick={()=>rotateImage("270")} alt="rotateOnClock" />Поворот на 270</Button>
+					</FormGroup>
 				</Form>
-          		<Button className={classes.button}><img src={iconClockwise} onClick={()=>rotateImage("90")} alt="rotateOnClock" /></Button>
-				<Button className={classes.button}><img src={iconCounterclock} onClick={()=>rotateImage("270")} alt="rotateOnClock" /></Button>
         	</Modal>
 			<Modal active={brushModalActive} setActive={setBrushModalActive}>
 				<div>Размер</div>
@@ -646,7 +656,7 @@ export const MyCanvas = () => {
     			/>		
 				<div>Цвет</div> 
 				<HexColorPicker color={color} onChange={setColor}/>
-				<Button onClick={changeBrushColor}>Поменять цвет</Button>	
+				<Button className={classes.button} onClick={changeBrushColor}>Поменять цвет</Button>	
         	</Modal>
 			<Modal active={eraseModalActive} setActive={setEraseModalActive}>
 			 <div>Размер</div>
@@ -666,20 +676,24 @@ export const MyCanvas = () => {
 							id="inp1"
 							type="text"
 						/>
-						<Input
+					</FormGroup>
+					<FormGroup><Input
 							id="inp2"
 							type="text"
-						/>
-						<Input
+						/></FormGroup>
+						
+						<FormGroup><Input
 							id="inp3"
 							type="text"
-						/>
+						/></FormGroup>
+						
+						<FormGroup>
 						<Input
 							id="inp4"
 							type="text"
 						/>
 					</FormGroup>
-					<Button>Обрезать</Button>
+					<Button className={classes.button}>Обрезать</Button>
 				</Form>
 			</Modal>
 
@@ -693,7 +707,7 @@ export const MyCanvas = () => {
 							type="text"
 						/>
 					</FormGroup>
-					<Button>Ок</Button>
+					<Button className={classes.button}>Ок</Button>
 				</Form>
 			</Modal>
 		</div>  
