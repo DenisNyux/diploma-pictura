@@ -1,30 +1,25 @@
 import classes from './MyCanvas.module.css';
 import MySideNav from './MySideNav';
-//import Dropdown from './Dropdown';
-import {
-	NavItem,
-	NavIcon,
-	NavText
-  } from "@trendmicro/react-sidenav";
-import iconLoad from './box-arrow-in-down.svg';
-import iconSave from './box-arrow-down.svg';
-import iconBrush from './brush.svg';
-import iconEraser from './eraser.svg';
-import iconRect from './square.svg';
-import iconTri from './triangle.svg';
-import iconCircle from './circle.svg';
-import iconRotate from './rotate.svg';
-import iconCrop from './crop.svg';
-import iconUndo from './undo.svg';
-import iconCounterclock from './arrow-counterclockwise.svg';
-import iconClockwise from './arrow-clockwise.svg';
-import iconFilter from './asterisk.svg';
+import { NavItem, NavIcon, NavText } from "@trendmicro/react-sidenav";
+import iconLoad from './icons/box-arrow-in-down.svg';
+import iconSave from './icons/box-arrow-down.svg';
+import iconBrush from './icons/brush.svg';
+import iconEraser from './icons/eraser.svg';
+import iconRect from './icons/square.svg';
+import iconTri from './icons/triangle.svg';
+import iconCircle from './icons/circle.svg';
+import iconRotate from './icons/rotate.svg';
+import iconCrop from './icons/crop.svg';
+import iconUndo from './icons/undo.svg';
+import iconCounterclock from './icons/arrow-counterclockwise.svg';
+import iconClockwise from './icons/arrow-clockwise.svg';
+import iconFilter from './icons/asterisk.svg';
 import React, { useState } from 'react';
 import Modal from './Modal/Modal';
-import { Form, FormGroup, Label, Input, Button, Dropdown, DropdownToggle, DropdownItem, DropdownMenu} from 'reactstrap';
+import { Form, FormGroup, Label, Input, Button} from 'reactstrap';
 import { HexColorPicker } from "react-colorful";
-import myimg from './456.PNG';
-//import "react-colorful/dist/index.css";
+
+
 
 
 
@@ -495,7 +490,7 @@ export const MyCanvas = () => {
 		const ctxFg = canvasFg.getContext("2d");
 		ctxFg.strokeStyle = color;
 	}
-
+	//изменение угла поворота изображения
 	const changeAngle = () => {
 		const angleInp = document.getElementById('angle');
 		setAngleValue(angleInp.value);
@@ -639,10 +634,10 @@ export const MyCanvas = () => {
 					<Button className={classes.button_form} onClick={()=>rotateImage(angleValue)} >Ок</Button>
 				
 					<FormGroup>
-					<Button className={classes.button}><img src={iconClockwise} onClick={()=>rotateImage("90")} id="clockwise" alt="rotateOnClock" />Поворот на 90</Button><br/>
-					<Button className={classes.button}><img src={iconCounterclock} onClick={()=>rotateImage("270")} alt="rotateOnClock" />Поворот на 270</Button>
+					<Button type='button' className={classes.button} onClick={()=>rotateImage("90")}><img src={iconClockwise}  id="clockwise" alt="rotateOnClock" /></Button><br/>
+					<Button type='button' className={classes.button} onClick={()=>rotateImage("270")}><img src={iconCounterclock}  alt="rotateOnClock" /></Button>
 					</FormGroup>
-				</Form>
+						</Form>		
         	</Modal>
 			<Modal active={brushModalActive} setActive={setBrushModalActive}>
 				<div>Размер</div>
@@ -693,7 +688,7 @@ export const MyCanvas = () => {
 							type="text"
 						/>
 					</FormGroup>
-					<Button className={classes.button}>Обрезать</Button>
+					<Button type='button' className={classes.button}>Обрезать</Button>
 				</Form>
 			</Modal>
 
@@ -707,9 +702,18 @@ export const MyCanvas = () => {
 							type="text"
 						/>
 					</FormGroup>
-					<Button className={classes.button}>Ок</Button>
+					<Button type='button' className={classes.button}>Ок</Button>
 				</Form>
 			</Modal>
+			<div id="resize">
+			<div>Масштаб</div>
+			<Input
+      				id="resizeInp"
+      				type="range"
+					min="0" 
+					max="100"
+    			/>		
+			</div>
 		</div>  
       );
   }

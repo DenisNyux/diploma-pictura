@@ -88,3 +88,16 @@
     #login:hover {
         background-color: whitesmoke;
     }
+    
+    #resize {
+        position: fixed;
+        background-color: blueviolet;
+        color: whitesmoke;
+        bottom: 2vw;
+        right: 2vw;
+        border-radius: 12px;
+        padding: 10px;
+        text-align: center;
+        min-width: 200px;
+        z-index: 999;
+    }
