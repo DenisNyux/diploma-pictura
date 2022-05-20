@@ -48,17 +48,37 @@ router.post('/rotate', async(req, res) => {
 })
 
 
-// router.post('/rotate', async (req, res) => {
-//     const rotate = require('./image_processing/rotator');
-//     const req_img_buf = Buffer.from(req.body.base64image, 'base64');
-//     const new_name = path.join(__dirname, './static/uploads/') + uuidv4()+ '-rotated' + '.png';
-//     await rotate(req_img_buf, 
-//         new_name, 
-//         Number(req.body.angle)
-//         )
-//     res.status(200).json(await json_res(new_name))
-// });
+router.post('/resize', async(req, res) => {
+    const resize = require('./image_processing/resize');
+    // console.log(req.body.base64image.substr(0, 10));
+    const req_img_buf = Buffer.from(req.body.base64image, 'base64');
+    const file_to_write_name = uuidv4() + '-resized.png';
+    const file_to_write_path = path.join(__dirname, './static/uploads/') + file_to_write_name;
+    await resize(req_img_buf, file_to_write_path, Number(req.body.kf));
+    console.log('its fine')
+    res.status(200).json(await json_res(file_to_write_path, req.body.image_name));
+    // fs.unlinkSync(file_to_write_path); //tut bila nastya
+})
 
+router.post('/flip', async(req, res) => {
+    const flip = require('./image_processing/flip');
+    const req_img_buf = Buffer.from(req.body.base64image, 'base64');
+    const file_to_write_name = uuidv4() + '-flipped.png';
+    const file_to_write_path = path.join(__dirname, './static/uploads/') + file_to_write_name;
+    await flip(req_img_buf, file_to_write_path);
+    console.log('its fine')
+    res.status(200).json(await json_res(file_to_write_path, req.body.image_name));
+});
+
+router.post('/flop', async(req, res) => {
+    const flip = require('./image_processing/flop');
+    const req_img_buf = Buffer.from(req.body.base64image, 'base64');
+    const file_to_write_name = uuidv4() + '-flopped.png';
+    const file_to_write_path = path.join(__dirname, './static/uploads/') + file_to_write_name;
+    await flip(req_img_buf, file_to_write_path);
+    console.log('its fine')
+    res.status(200).json(await json_res(file_to_write_path, req.body.image_name));
+});
 
 router.post('/crop', async(req, res) => {
     const crop_img = require('./image_processing/crop');

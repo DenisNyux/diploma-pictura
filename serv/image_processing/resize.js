@@ -1,13 +1,13 @@
 const sharp = require("sharp");
 const path = require('path');
+const get_meta = require('./getmeta')
 
-async function resizeImage(path_to_image, new_filename, kf) {
+async function resizeImage(img_buf, new_filename, kf) {
   try {
-    const img = await sharp(path_to_image);
-    img
+    await sharp(img_buf)
     .resize({
-      width: (await img.metadata()).width / kf,
-      height: (await img.metadata()).height / kf
+      width: Math.round((await get_meta(img_buf)).width * kf),
+      height: Math.round((await get_meta(img_buf)).height * kf)
     })
     // .toFormat("jpeg", { mozjpeg: true })
     .toFile(new_filename);

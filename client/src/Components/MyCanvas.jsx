@@ -93,6 +93,8 @@ export const MyCanvas = () => {
 			y: mouseY,
 			mode: "begin"
 			});
+			picsCashe.casheMut(true);
+			document.querySelector('#resizeInp').value = 2
 		}
 		
 		const mouseMove = (e) => {
@@ -106,6 +108,8 @@ export const MyCanvas = () => {
 					mode: "draw"
 				});					
 			}
+			picsCashe.casheMut(true);
+			document.querySelector('#resizeInp').value = 2
 		}
 
 		const mouseUp = (e) => {
@@ -117,6 +121,8 @@ export const MyCanvas = () => {
 				y: mouseY,
 				mode: "end"
 			});
+			picsCashe.casheMut(true);
+			document.querySelector('#resizeInp').value = 2
 		}
 		// Обработчики рисования мышкой
 		const brushFunc = () => {
@@ -172,6 +178,8 @@ export const MyCanvas = () => {
 				coord.length = 0;
 			
 			}
+			picsCashe.casheMut(true);
+			document.querySelector('#resizeInp').value = 2
 		}
 
 		const mouseRectCoordEvent = (e) => {
@@ -192,6 +200,8 @@ export const MyCanvas = () => {
 				coord.length = 0;
 			
 			}
+			picsCashe.casheMut(true);
+			document.querySelector('#resizeInp').value = 2
 		}
 
 		const mouseCircleCoordEvent = (e) => {
@@ -214,6 +224,8 @@ export const MyCanvas = () => {
 				coord.length = 0;
 			
 			}
+			picsCashe.casheMut(true);
+			document.querySelector('#resizeInp').value = 2 
 		}
 
 		
@@ -292,6 +304,28 @@ export const MyCanvas = () => {
     });
 
 	let encoded, filename;
+	let picsCashe = {
+		bg_src: null,
+		fg_src: null,
+		changable: true,
+		casheMut: function(bool_val) {
+			this.changable = bool_val
+		},
+		changeCashe: function(values) {
+			if (this.changable===true) {
+				this.bg_src = values[0];
+				this.fg_src = values[1];
+				console.log('cache changed')	
+			} else {
+				console.log('cant change cache')
+			} 
+			
+		},
+		getCache: function(){
+			return [this.bg_src, this.fg_src]
+		}
+	}
+
 
 	async function handleChange(event) {
 		console.log('called encoded change')
@@ -311,6 +345,7 @@ export const MyCanvas = () => {
 		await loadImgToBgCv(result.bs64img, result.meta.width, result.meta.height, result.meta.format)
 		.then((x)=>console.log(x))
 		setLoadModalActive(false);
+		rewriteCache(true)
 	}
 
 	const getBase64 = (file) => new Promise(function (resolve, reject) {
@@ -455,6 +490,8 @@ export const MyCanvas = () => {
 		.catch(error => console.log(`error occured on sending rotate req`));
 		await loadImgToFgCv(fgResult.bs64img, fgResult.meta.width, fgResult.meta.height, fgResult.meta.format)
 		.then((x)=>console.log(x));
+		picsCashe.casheMut(true);
+		document.querySelector('#resizeInp').value = 2
 	}
 
 
@@ -466,6 +503,47 @@ export const MyCanvas = () => {
     	return image;
 	}
 
+	const rewriteCache = (mutability) => new Promise((resolve, reject) =>{
+		console.log('called rewritor')
+		const Fg = getImage(document.getElementById("fg"))
+		.src
+		.replace("data:", "").replace(/^.+,/, "");
+		const Bg = getImage(document.getElementById("bg"))
+		.src
+		.replace("data:", "").replace(/^.+,/, "");
+		picsCashe.changeCashe([Bg, Fg]);
+		picsCashe.casheMut(mutability);
+		resolve(picsCashe.getCache())
+		reject('cache error ')
+	});
+
+
+	async function handleScaleInput() {
+		const [Bg, Fg] = await rewriteCache(false).then(x => x)
+
+		const firstRequestOptions = prepareRequestOptions([
+			["base64image", Bg], 
+			["image_name", filename],
+			["kf", Number(document.querySelector('#resizeInp').value) / 2]
+		]);
+		const bgResult = await fetch(API_URL + "/resize", firstRequestOptions)
+		.then(response => response.json())
+		.catch(error => console.log(`error occured on sending rotate req`));
+		await resizeCanvases(bgResult.meta.width, bgResult.meta.height).then((x)=>console.log(x));
+		await loadImgToBgCv(bgResult.bs64img, bgResult.meta.width, bgResult.meta.height, bgResult.meta.format)
+		.then((x)=>console.log(x));
+
+		const secondRequestOptions = prepareRequestOptions([
+			["base64image", Fg], 
+			["image_name", filename],
+			["kf", Number(document.querySelector('#resizeInp').value)/2]
+		]);
+		const fgResult = await fetch(API_URL + "/resize", secondRequestOptions)
+		.then(response => response.json())
+		.catch(error => console.log(`error occured on sending rotate req`));
+		await loadImgToFgCv(fgResult.bs64img, fgResult.meta.width, fgResult.meta.height, fgResult.meta.format)
+		.then((x)=>console.log(x));
+	}
 
 	// функция изменяющая размер кисти через ползунок
 	const changeBrushSize = () => {
@@ -648,6 +726,7 @@ export const MyCanvas = () => {
 					max="100"
 					onChange={changeBrushSize}
 					value={brushVal}
+					// onBeforeInput={saveCache}
     			/>		
 				<div>Цвет</div> 
 				<HexColorPicker color={color} onChange={setColor}/>
@@ -710,8 +789,10 @@ export const MyCanvas = () => {
 			<Input
       				id="resizeInp"
       				type="range"
-					min="0" 
-					max="100"
+					min="1" 
+					max="3"
+					step="0.1"
+					onChange={handleScaleInput}
     			/>		
 			</div>
 		</div>  
