@@ -1,84 +1,343 @@
 const express = require('express');
 const path = require('path');
 const bodyParser = require('body-parser');
-const fs = require('fs');
-const {
-    v1: uuidv1,
-    v4: uuidv4,
-} = require('uuid');
-const get_meta = require('./image_processing/getmeta');
 const { json } = require('body-parser');
-
+const imageProcessor = require('./image_processing/image_processing_app')
+const fs = require('fs');
 
 
 const router = express.Router();
 router.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
 
-async function json_res(file_path, file_name) {
-    const file_buf = fs.readFileSync(file_path);
-    const meta = await get_meta(file_buf);
-    return {
-        "img_name": file_name,
-        "meta": meta,
-        "bs64img": file_buf.toString('base64')
+
+// Запрос для получения метаданных и загрузки/удаления изображения
+router.get('/', async (req, res) => {
+    if (req.body.base64image) {
+        try {
+            const img = imageProcessor.getBuffer(req.body.base64image)
+            const responseResult = await imageProcessor.getImgWithMeta(img, req.body.image_name)
+            res.status(200).json(responseResult)
+        }
+        catch(er) {
+            res.status(400).send('400, Bad request '+ er)
+        }
+    } else if (req.body.path) {
+        try {
+            // imageProcessor.verifyFile(req.body.path)
+            const img = imageProcessor.bufFromFile(req.body.path)
+            const responseResult = await imageProcessor.getImgWithMeta(img, req.body.image_name)
+            res.status(200).json(responseResult)
+        }
+        catch(er) {
+            res.status(400).send('400, Bad request '+ er)
+        }
+    } else {
+        res.status(400).send('400, Bad request, No key parameters')
     }
-}
-
-router.post('/', async(req, res) => {
-    // console.log(req.body.base64image.substr(0, 100));
-    const req_img_buf = Buffer.from(req.body.base64image, 'base64');
-    const file_to_write_name = uuidv4() + '.png';
-    const file_to_write_path = path.join(__dirname, './static/uploads/') + file_to_write_name;
-    console.log(file_to_write_path)
-    fs.writeFileSync(file_to_write_path, req_img_buf);
-    res.status(200).json(await json_res(file_to_write_path, req.body.image_name))
-    fs.unlinkSync(file_to_write_path);
 });
 
-router.post('/rotate', async(req, res) => {
-    const rotate = require('./image_processing/rotator');
-    // console.log(req.body.base64image.substr(0, 10));
-    const req_img_buf = Buffer.from(req.body.base64image, 'base64');
-    const file_to_write_name = uuidv4() + '-rotated.png';
-    const file_to_write_path = path.join(__dirname, './static/uploads/') + file_to_write_name;
-    await rotate(req_img_buf, file_to_write_path, Number(req.body.angle));
-    console.log('its fine')
-    res.status(200).json(await json_res(file_to_write_path, req.body.image_name));
-    fs.unlinkSync(file_to_write_path); //tut bila nastya
+router.post('/', async (req, res) => {
+    if (req.body.base64image){
+        try {
+            const img = imageProcessor.getBuffer(req.body.base64image)
+            const responseResult = imageProcessor.SaveImage(img)
+            res.status(200).json(responseResult)
+        }
+        catch(er) {
+            res.status(400).send('400, Bad request' + er)
+        }
+    }
+    else {
+        res.status(400).send('400, Bad request, No key parameters')
+    }
+});
+
+
+router.delete('/*', (req, res) =>{
+    console.log(path.join(__dirname, req.body.path))
+    try {
+        fs.unlinkSync(path.join(__dirname, req.body.path))
+        res.status(200).send('Deleted successfully')
+    }
+    catch(er) {
+        res.status(400).send('400, Bad request Invalid path' )
+    }
 })
 
-
-router.post('/resize', async(req, res) => {
-    const resize = require('./image_processing/resize');
-    // console.log(req.body.base64image.substr(0, 10));
-    const req_img_buf = Buffer.from(req.body.base64image, 'base64');
-    const file_to_write_name = uuidv4() + '-resized.png';
-    const file_to_write_path = path.join(__dirname, './static/uploads/') + file_to_write_name;
-    await resize(req_img_buf, file_to_write_path, Number(req.body.kf));
-    console.log('its fine')
-    res.status(200).json(await json_res(file_to_write_path, req.body.image_name));
-    // fs.unlinkSync(file_to_write_path); //tut bila nastya
-})
-
-router.post('/flip', async(req, res) => {
-    const flip = require('./image_processing/flip');
-    const req_img_buf = Buffer.from(req.body.base64image, 'base64');
-    const file_to_write_name = uuidv4() + '-flipped.png';
-    const file_to_write_path = path.join(__dirname, './static/uploads/') + file_to_write_name;
-    await flip(req_img_buf, file_to_write_path);
-    console.log('its fine')
-    res.status(200).json(await json_res(file_to_write_path, req.body.image_name));
+// Запросы поворота изображения 
+router.get('/rotate', async (req, res) => {
+    if (req.body.base64image && req.body.angle && !isNaN(Number(req.body.angle))) {
+        try {
+            const img = imageProcessor.getBuffer(req.body.base64image)
+            const newImg = await imageProcessor.changeImage(img, 'rotateImage', [Number(req.body.angle)])
+            const responseResult = await imageProcessor.getImgWithMeta(newImg, req.body.image_name)
+            res.status(200).json(responseResult)
+            }
+        catch(er) {
+            res.status(400).send('400, Bad request '+ er)
+        }
+    } else if (req.body.path && req.body.angle && !isNaN(Number(req.body.angle))) {
+        try {
+            const img = imageProcessor.bufFromFile(req.body.path)
+            const newImg = await imageProcessor.changeImage(img, 'rotateImage', [Number(req.body.angle)])
+            const responseResult = await imageProcessor.getImgWithMeta(newImg, req.body.image_name)
+            res.status(200).json(responseResult)
+        }
+        catch(er) {
+            res.status(400).send('400, Bad request '+ er)
+        }
+        
+    } else {
+        res.status(400).send('400, Bad request')
+    }
 });
 
-router.post('/flop', async(req, res) => {
-    const flip = require('./image_processing/flop');
-    const req_img_buf = Buffer.from(req.body.base64image, 'base64');
-    const file_to_write_name = uuidv4() + '-flopped.png';
-    const file_to_write_path = path.join(__dirname, './static/uploads/') + file_to_write_name;
-    await flip(req_img_buf, file_to_write_path);
-    console.log('its fine')
-    res.status(200).json(await json_res(file_to_write_path, req.body.image_name));
+router.post('/rotate', async (req, res) => {
+    if (req.body.base64image && req.body.angle && !isNaN(Number(req.body.angle))) {
+        try {
+            const img = imageProcessor.getBuffer(req.body.base64image)
+            const newImg = await imageProcessor.changeImage(img, 'rotateImage', [Number(req.body.angle)])
+            const responseResult = imageProcessor.SaveImage(newImg)
+            res.status(200).json(responseResult)
+        }
+        catch(er) {
+            res.status(406).send('400, Bad request'+er)
+        }
+    } else {
+        res.status(400).send('400, Bad request')
+    }
 });
+
+
+// Запросы изменения разрешения
+router.get('/resize', async (req, res) => {
+    if (req.body.base64image && req.body.kf && !isNaN(Number(req.body.kf))) {
+        try {
+            const img = imageProcessor.getBuffer(req.body.base64image)
+            const newImg = await imageProcessor.changeImage(img, 'resizeImage', [Number(req.body.kf)])
+            const responseResult = await imageProcessor.getImgWithMeta(newImg, req.body.image_name)
+            res.status(200).json(responseResult)
+            }
+        catch(er) {
+            res.status(400).send('400, Bad request '+ er)
+        }
+    } else if (req.body.path && req.body.kf && !isNaN(Number(req.body.kf))) {
+        try {
+            const img = imageProcessor.bufFromFile(req.body.path)
+            const newImg = await imageProcessor.changeImage(img, 'resizeImage', [Number(req.body.kf)])
+            const responseResult = await imageProcessor.getImgWithMeta(newImg, req.body.image_name)
+            res.status(200).json(responseResult)
+        }
+        catch(er) {
+            res.status(400).send('400, Bad request '+ er)
+        }
+        
+    } else {
+        res.status(400).send('400, Bad request')
+    }
+});
+
+router.post('/resize', async (req, res) => {
+    if (req.body.base64image && req.body.kf && !isNaN(Number(req.body.kf))) {
+        try {
+            const img = imageProcessor.getBuffer(req.body.base64image)
+            const newImg = await imageProcessor.changeImage(img, 'resizeImage', [Number(req.body.kf)])
+            const responseResult = imageProcessor.SaveImage(newImg)
+            res.status(200).json(responseResult)
+        }
+        catch(er) {
+            res.status(406).send('400, Bad request'+er)
+        }
+    } else {
+        res.status(400).send('400, Bad request')
+    }
+});
+
+// Запросы flip
+router.get('/flip', async (req, res) => {
+    if (req.body.base64image) {
+        try {
+            const img = imageProcessor.getBuffer(req.body.base64image)
+            const newImg = await imageProcessor.changeImage(img, 'flipImage')
+            const responseResult = await imageProcessor.getImgWithMeta(newImg, req.body.image_name)
+            res.status(200).json(responseResult)
+            }
+        catch(er) {
+            res.status(400).send('400, Bad request '+ er)
+        }
+    } else if (req.body.path) {
+        try {
+            const img = imageProcessor.bufFromFile(req.body.path)
+            const newImg = await imageProcessor.changeImage(img, 'flipImage')
+            const responseResult = await imageProcessor.getImgWithMeta(newImg, req.body.image_name)
+            res.status(200).json(responseResult)
+        }
+        catch(er) {
+            res.status(400).send('400, Bad request '+ er)
+        }
+        
+    } else {
+        res.status(400).send('400, Bad request')
+    }
+});
+
+router.post('/flip', async (req, res) => {
+    if (req.body.base64image) {
+        try {
+            const img = imageProcessor.getBuffer(req.body.base64image)
+            const newImg = await imageProcessor.changeImage(img, 'flipImage')
+            const responseResult = imageProcessor.SaveImage(newImg)
+            res.status(200).json(responseResult)
+        }
+        catch(er) {
+            res.status(406).send('400, Bad request'+er)
+        }
+    } else {
+        res.status(400).send('400, Bad request')
+    }
+});
+
+
+// Запросы flop
+router.get('/flop', async (req, res) => {
+    if (req.body.base64image) {
+        try {
+            const img = imageProcessor.getBuffer(req.body.base64image)
+            const newImg = await imageProcessor.changeImage(img, 'flopImage')
+            const responseResult = await imageProcessor.getImgWithMeta(newImg, req.body.image_name)
+            res.status(200).json(responseResult)
+            }
+        catch(er) {
+            res.status(400).send('400, Bad request '+ er)
+        }
+    } else if (req.body.path) {
+        try {
+            const img = imageProcessor.bufFromFile(req.body.path)
+            const newImg = await imageProcessor.changeImage(img, 'flopImage')
+            const responseResult = await imageProcessor.getImgWithMeta(newImg, req.body.image_name)
+            res.status(200).json(responseResult)
+        }
+        catch(er) {
+            res.status(400).send('400, Bad request '+ er)
+        }
+        
+    } else {
+        res.status(400).send('400, Bad request')
+    }
+});
+
+router.post('/flop', async (req, res) => {
+    if (req.body.base64image) {
+        try {
+            const img = imageProcessor.getBuffer(req.body.base64image)
+            const newImg = await imageProcessor.changeImage(img, 'flopImage')
+            const responseResult = imageProcessor.SaveImage(newImg)
+            res.status(200).json(responseResult)
+        }
+        catch(er) {
+            res.status(406).send('400, Bad request'+er)
+        }
+    } else {
+        res.status(400).send('400, Bad request')
+    }
+});
+
+// Запросы gblur
+router.get('/gblur', async (req, res) => {
+    if (req.body.base64image && req.body.sigma && !isNaN(Number(req.body.sigma))) {
+        try {
+            const img = imageProcessor.getBuffer(req.body.base64image)
+            const newImg = await imageProcessor.changeImage(img, 'gBlur', [Number(req.body.sigma)])
+            const responseResult = await imageProcessor.getImgWithMeta(newImg, req.body.image_name)
+            res.status(200).json(responseResult)
+            }
+        catch(er) {
+            res.status(400).send('400, Bad request '+ er)
+        }
+    } else if (req.body.path && req.body.sigma && !isNaN(Number(req.body.sigma))) {
+        try {
+            const img = imageProcessor.bufFromFile(req.body.path)
+            const newImg = await imageProcessor.changeImage(img, 'gBlur', [Number(req.body.sigma)])
+            const responseResult = await imageProcessor.getImgWithMeta(newImg, req.body.image_name)
+            res.status(200).json(responseResult)
+        }
+        catch(er) {
+            res.status(400).send('400, Bad request '+ er)
+        }
+        
+    } else {
+        res.status(400).send('400, Bad request')
+    }
+});
+
+router.post('/gblur', async (req, res) => {
+    if (req.body.base64image && req.body.sigma && !isNaN(Number(req.body.sigma))) {
+        try {
+            const img = imageProcessor.getBuffer(req.body.base64image)
+            const newImg = await imageProcessor.changeImage(img, 'gBlur', [Number(req.body.sigma)])
+            const responseResult = imageProcessor.SaveImage(newImg)
+            res.status(200).json(responseResult)
+        }
+        catch(er) {
+            res.status(406).send('400, Bad request'+er)
+        }
+    } else {
+        res.status(400).send('400, Bad request')
+    }
+});
+
+//Запросы crop ????
+router.get('/crop', async (req, res) => {
+    const mainCondition = req.body.left
+    
+    if (req.body.base64image 
+        && req.body.sigma 
+        && !isNaN(Number(req.body.sigma))) {
+        try {
+            const img = imageProcessor.getBuffer(req.body.base64image)
+            const newImg = await imageProcessor.changeImage(img, 'gBlur', [Number(req.body.sigma)])
+            const responseResult = await imageProcessor.getImgWithMeta(newImg, req.body.image_name)
+            res.status(200).json(responseResult)
+            }
+        catch(er) {
+            res.status(400).send('400, Bad request '+ er)
+        }
+    } else if (req.body.path && req.body.sigma && !isNaN(Number(req.body.sigma))) {
+        try {
+            const img = imageProcessor.bufFromFile(req.body.path)
+            const newImg = await imageProcessor.changeImage(img, 'gBlur', [Number(req.body.sigma)])
+            const responseResult = await imageProcessor.getImgWithMeta(newImg, req.body.image_name)
+            res.status(200).json(responseResult)
+        }
+        catch(er) {
+            res.status(400).send('400, Bad request '+ er)
+        }
+        
+    } else {
+        res.status(400).send('400, Bad request')
+    }
+});
+
+router.post('/crop', async (req, res) => {
+    if (req.body.base64image && req.body.sigma && !isNaN(Number(req.body.sigma))) {
+        try {
+            const img = imageProcessor.getBuffer(req.body.base64image)
+            const newImg = await imageProcessor.changeImage(img, 'gBlur', [Number(req.body.sigma)])
+            const responseResult = imageProcessor.SaveImage(newImg)
+            res.status(200).json(responseResult)
+        }
+        catch(er) {
+            res.status(406).send('400, Bad request'+er)
+        }
+    } else {
+        res.status(400).send('400, Bad request')
+    }
+});
+
+
+
+
+
 
 router.post('/crop', async(req, res) => {
     const crop_img = require('./image_processing/crop');
@@ -94,38 +353,5 @@ router.post('/crop', async(req, res) => {
     res.sendFile(new_name);
 });
 
-
-
-
-router.post('/flip', async(req, res) => {
-    const flip = require('./image_processing/flip');
-    const img = await base_converter(req.body.base64image);
-    const new_name = path.join(__dirname, './static/uploads/') + img.img_name + '-flipped.' + 'png';
-    await flip(img.buf,
-        new_name,
-    )
-    res.sendFile(new_name);
-});
-
-router.post('/flop', async(req, res) => {
-    const flop = require('./image_processing/flop');
-    const img = await base_converter(req.body.base64image);
-    const new_name = path.join(__dirname, './static/uploads/') + img.img_name + '-flopped.' + 'png';
-    await flop(img.buf,
-        new_name,
-    )
-    res.sendFile(new_name);
-});
-
-router.post('/gblur', async(req, res) => {
-    const gblur = require('./image_processing/gblur');
-    const img = await base_converter(req.body.base64image);
-    const new_name = path.join(__dirname, './static/uploads/') + img.img_name + '-gblurred.' + 'png';
-    await gblur(img.buf,
-        new_name,
-        Number(req.body.sigma)
-    )
-    res.sendFile(new_name);
-});
 
 module.exports = router;
