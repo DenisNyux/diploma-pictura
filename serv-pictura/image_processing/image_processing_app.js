@@ -50,13 +50,15 @@ async function changeImage(buf, action, params) {
     return await imgFuncs[action](buf, params)
 }
 
-function SaveImage(buf) {
+async function SaveImage(buf) {
     const localPath = '/static/uploads/' + uuidv4() + '.png';
     const fullPath = path.join('/home/denisnyux/serv-pictura', localPath) 
     fs.writeFileSync(fullPath, buf);
+    const meta = await imgFuncs['getMetadata'](buf);
     return {
         "path": localPath,
         "bs64string": buf.toString('base64'),
+        "meta": meta
     }
 }
 

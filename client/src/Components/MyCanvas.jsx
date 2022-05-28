@@ -37,7 +37,10 @@ export const MyCanvas = () => {
 	const [eraseVal, setEraseVal] = useState(20); // состояние размера ластика
 	const [color, setColor] = useState("#aabbcc"); //состояние палитры
 	const [angleValue, setAngleValue] = useState("0"); // состояние угла
-	const API_URL = "http://localhost:3030/api"
+	const [bs64, setBs64] = useState("")
+	const [filename, setName] = useState("")
+
+	const API_URL = "http://palitra-redactor.ru:3030/api/"
 	
 
     window.addEventListener("load", function onWindowLoad(){
@@ -303,152 +306,25 @@ export const MyCanvas = () => {
 		undoBtn.addEventListener('mouseup', undoFuncUp);
     });
 
-	let encoded, filename;
-	let picsCashe = {
-		bg_src: null,
-		fg_src: null,
-		changable: true,
-		casheMut: function(bool_val) {
-			this.changable = bool_val
-		},
-		changeCashe: function(values) {
-			if (this.changable===true) {
-				this.bg_src = values[0];
-				this.fg_src = values[1];
-				console.log('cache changed')	
-			} else {
-				console.log('cant change cache')
-			} 
-			
-		},
-		getCache: function(){
-			return [this.bg_src, this.fg_src]
-		}
-	}
+	let picsCashe, encoded, resizeCanvases, loadImgToBgCv, loadImgToFgCv, getImage, dragStartHandler, dragLeaveHandler, onDropHandler, rotateImage, handleScaleInput, rewriteCache
 
-
-	async function handleChange(event) {
+	async function handleChange(ev) {
 		console.log('called encoded change')
-		const file = event.target.files[0];
-		filename = file.name;
-		encoded = await getBase64(file)
+		const file = ev.target.files[0];
+		setName(file.name);
+		setBs64(await getBase64(file))
 	}
 
-	async function handleSubmit(event) {
-		event.preventDefault();
-		const requestOptions = prepareRequestOptions([["base64image", encoded], ["image_name", filename]])
-		const result = await fetch(API_URL, requestOptions)
-		.then(response =>
-			response.json())
-		.catch(error => console.log(`error occured`));
-		await resizeCanvases(result.meta.width, result.meta.height).then(x=>console.log(x));
-		await loadImgToBgCv(result.bs64img, result.meta.width, result.meta.height, result.meta.format)
-		.then((x)=>console.log(x))
-		setLoadModalActive(false);
-		rewriteCache(true)
-	}
-
-	const getBase64 = (file) => new Promise(function (resolve, reject) {
+	const getBase64 = (file) => new Promise((resolve, reject) => {
 		let reader = new FileReader();
 		reader.readAsDataURL(file);
 		reader.onload = () => resolve(reader.result.replace("data:", "").replace(/^.+,/, ""))
 		reader.onerror = (error) => reject('Error: ', error);
 	})
 
-	const resizeCanvases = (wdh, hgt) => new Promise((resolve, reject) => {
-		const ctxBg = document.getElementById("bg").getContext("2d");
-		const ctxFg = document.getElementById("fg").getContext("2d");
-		const ctxSave = document.getElementById("readyimg").getContext("2d");
-		ctxBg.canvas.width  = wdh;
-		ctxBg.canvas.height = hgt;
-		ctxFg.canvas.width  = wdh;
-		ctxFg.canvas.height = hgt;
-		ctxSave.canvas.width  = wdh;
-		ctxSave.canvas.height = hgt;
-		resolve('canvases resized')
-		reject('error occored with resizing canvases')
-	})
-	
-	const loadImgToBgCv = (base64str, wdh, hgt, format) => new Promise((resolve, reject) =>{
-		const new_img = new Image()
-		new_img.src = `data:image/${format};base64,${base64str}`
-		new_img.width = wdh
-		new_img.height = hgt
-		console.log('On BG we have')
-		console.log(new_img)
-		const canvasBg = document.getElementById("bg");
-        const ctxBg = canvasBg.getContext("2d");
-		new_img.onload = () => {
-			ctxBg.drawImage(new_img, 0, 0);
-			resolve('BG image was drawn on canvas')
-			reject('Canvas error occured')
-		} 
-	})
-
-	const loadImgToFgCv = (base64str, wdh, hgt, format) => new Promise((resolve, reject) =>{
-		const new_img = new Image()
-		new_img.src = `data:image/${format};base64,${base64str}`
-		new_img.width = wdh
-		new_img.height = hgt
-		console.log('On FG we have')
-		console.log(new_img)
-        const canvasFg = document.getElementById("fg");
-        const ctxFg = canvasFg.getContext("2d");
-		new_img.onload = () => {
-			ctxFg.drawImage(new_img, 0, 0);
-			resolve('FG image was drawn on canvas')
-			reject('Canvas error occured')
-		} 
-	})
-
-
-	function dragStartHandler(e) {
-    	e.preventDefault();
-    	setDrag(true); 
-  	};
-
-  	function dragLeaveHandler(e) {
-    	e.preventDefault();
-    	setDrag(false); 
-  	}
-
-  	async function onDropHandler(e) {
-    	e.preventDefault();
-		setDrag(false); 
-		const file = e.dataTransfer.files[0]
-		// console.log(e.dataTransfer.files[0]);
-    	await getBase64(file)
-          .then((result) => {
-            encoded = result;
-           })
-          .catch(e => console.log(e))
-		
-		var myHeaders = new Headers();
-		myHeaders.append("Content-Type", "application/x-www-form-urlencoded");
-  
-		var urlencoded = new URLSearchParams();
-		urlencoded.append("base64image", encoded);
-		urlencoded.append("image_name", filename);
-  
-		var requestOptions = {
-			method: 'POST',
-			headers: myHeaders,
-			body: urlencoded,
-			redirect: 'follow'
-		};
-
-		const result= await fetch(API_URL, requestOptions)
-		.then(response =>
-			response.json())
-		.catch(error => console.log(`error occured`));
-		await loadImgToBgCv(result.bs64img, result.meta.width, result.meta.height, result.meta.format)
-		setLoadModalActive(false);
-  	}
-
 	const prepareRequestOptions = (searchParams) =>  {
 		let myHeaders = new Headers();
 		myHeaders.append("Content-Type", "application/x-www-form-urlencoded");
-		
 		let urlencoded = new URLSearchParams();
 		searchParams.forEach(el => urlencoded.append(el[0], el[1]))
 		return {
@@ -459,91 +335,253 @@ export const MyCanvas = () => {
 		}
 	}
 
-	async function rotateImage(angle) {
-		const Fg = getImage(document.getElementById("fg"))
-		.src
-		.replace("data:", "").replace(/^.+,/, "");
-		const Bg = getImage(document.getElementById("bg"))
-		.src
-		.replace("data:", "").replace(/^.+,/, "");
 
-		const firstRequestOptions = prepareRequestOptions([
-			["base64image", Bg], 
-			["image_name", filename],
-			["angle", angle]
-		]);
-		const bgResult = await fetch(API_URL + "/rotate", firstRequestOptions)
-		.then(response => response.json())
-		.catch(error => console.log(`error occured on sending rotate req`));
-		await resizeCanvases(bgResult.meta.width, bgResult.meta.height).then((x)=>console.log(x));
-		await loadImgToBgCv(bgResult.bs64img, bgResult.meta.width, bgResult.meta.height, bgResult.meta.format)
-		.then((x)=>console.log(x));
+
+
+	async function handleSubmit(event) {
+		event.preventDefault();
+		const requestOptions = prepareRequestOptions([["base64image", bs64], ["image_name", filename]])
+		const result = await fetch(API_URL, requestOptions)
+		.then(response =>
+			response.json())
+		.then(r => console.log(r))
+		.catch(error => console.log(`error occured ${error}`));
+		// await resizeCanvases(result.meta.width, result.meta.height).then(x=>console.log(x));
+		// await loadImgToBgCv(result.bs64img, result.meta.width, result.meta.height, result.meta.format)
+		// .then((x)=>console.log(x))
+		// setLoadModalActive(false);
+		// rewriteCache(true)
+	}
+
+	// let encoded, filename;
+	// let picsCashe = {
+	// 	bg_src: null,
+	// 	fg_src: null,
+	// 	changable: true,
+	// 	casheMut: function(bool_val) {
+	// 		this.changable = bool_val
+	// 	},
+	// 	changeCashe: function(values) {
+	// 		if (this.changable===true) {
+	// 			this.bg_src = values[0];
+	// 			this.fg_src = values[1];
+	// 			console.log('cache changed')	
+	// 		} else {
+	// 			console.log('cant change cache')
+	// 		} 
+			
+	// 	},
+	// 	getCache: function(){
+	// 		return [this.bg_src, this.fg_src]
+	// 	}
+	// }
+
+
+	// async function handleChange(event) {
+	// 	console.log('called encoded change')
+	// 	const file = event.target.files[0];
+	// 	filename = file.name;
+	// 	encoded = await getBase64(file)
+	// }
+
+	// 
+
+	// const getBase64 = (file) => new Promise(function (resolve, reject) {
+	// 	let reader = new FileReader();
+	// 	reader.readAsDataURL(file);
+	// 	reader.onload = () => resolve(reader.result.replace("data:", "").replace(/^.+,/, ""))
+	// 	reader.onerror = (error) => reject('Error: ', error);
+	// })
+
+	// const resizeCanvases = (wdh, hgt) => new Promise((resolve, reject) => {
+	// 	const ctxBg = document.getElementById("bg").getContext("2d");
+	// 	const ctxFg = document.getElementById("fg").getContext("2d");
+	// 	const ctxSave = document.getElementById("readyimg").getContext("2d");
+	// 	ctxBg.canvas.width  = wdh;
+	// 	ctxBg.canvas.height = hgt;
+	// 	ctxFg.canvas.width  = wdh;
+	// 	ctxFg.canvas.height = hgt;
+	// 	ctxSave.canvas.width  = wdh;
+	// 	ctxSave.canvas.height = hgt;
+	// 	resolve('canvases resized')
+	// 	reject('error occored with resizing canvases')
+	// })
+	
+	// const loadImgToBgCv = (base64str, wdh, hgt, format) => new Promise((resolve, reject) =>{
+	// 	const new_img = new Image()
+	// 	new_img.src = `data:image/${format};base64,${base64str}`
+	// 	new_img.width = wdh
+	// 	new_img.height = hgt
+	// 	console.log('On BG we have')
+	// 	console.log(new_img)
+	// 	const canvasBg = document.getElementById("bg");
+    //     const ctxBg = canvasBg.getContext("2d");
+	// 	new_img.onload = () => {
+	// 		ctxBg.drawImage(new_img, 0, 0);
+	// 		resolve('BG image was drawn on canvas')
+	// 		reject('Canvas error occured')
+	// 	} 
+	// })
+
+	// const loadImgToFgCv = (base64str, wdh, hgt, format) => new Promise((resolve, reject) =>{
+	// 	const new_img = new Image()
+	// 	new_img.src = `data:image/${format};base64,${base64str}`
+	// 	new_img.width = wdh
+	// 	new_img.height = hgt
+	// 	console.log('On FG we have')
+	// 	console.log(new_img)
+    //     const canvasFg = document.getElementById("fg");
+    //     const ctxFg = canvasFg.getContext("2d");
+	// 	new_img.onload = () => {
+	// 		ctxFg.drawImage(new_img, 0, 0);
+	// 		resolve('FG image was drawn on canvas')
+	// 		reject('Canvas error occured')
+	// 	} 
+	// })
+
+
+	// function dragStartHandler(e) {
+    // 	e.preventDefault();
+    // 	setDrag(true); 
+  	// };
+
+  	// function dragLeaveHandler(e) {
+    // 	e.preventDefault();
+    // 	setDrag(false); 
+  	// }
+
+  	// async function onDropHandler(e) {
+    // 	e.preventDefault();
+	// 	setDrag(false); 
+	// 	const file = e.dataTransfer.files[0]
+	// 	// console.log(e.dataTransfer.files[0]);
+    // 	await getBase64(file)
+    //       .then((result) => {
+    //         encoded = result;
+    //        })
+    //       .catch(e => console.log(e))
+		
+	// 	var myHeaders = new Headers();
+	// 	myHeaders.append("Content-Type", "application/x-www-form-urlencoded");
+  
+	// 	var urlencoded = new URLSearchParams();
+	// 	urlencoded.append("base64image", encoded);
+	// 	urlencoded.append("image_name", filename);
+  
+	// 	var requestOptions = {
+	// 		method: 'POST',
+	// 		headers: myHeaders,
+	// 		body: urlencoded,
+	// 		redirect: 'follow'
+	// 	};
+
+	// 	const result= await fetch(API_URL, requestOptions)
+	// 	.then(response =>
+	// 		response.json())
+	// 	.catch(error => console.log(`error occured`));
+	// 	await loadImgToBgCv(result.bs64img, result.meta.width, result.meta.height, result.meta.format)
+	// 	setLoadModalActive(false);
+  	// }
+
+	// const prepareRequestOptions = (searchParams) =>  {
+	// 	let myHeaders = new Headers();
+	// 	myHeaders.append("Content-Type", "application/x-www-form-urlencoded");
+		
+	// 	let urlencoded = new URLSearchParams();
+	// 	searchParams.forEach(el => urlencoded.append(el[0], el[1]))
+	// 	return {
+	// 		method: 'GET',
+	// 		headers: myHeaders,
+	// 		body: urlencoded,
+	// 		redirect: 'follow'
+	// 	}
+	// }
+
+	// async function rotateImage(angle) {
+	// 	const Fg = getImage(document.getElementById("fg"))
+	// 	.src
+	// 	.replace("data:", "").replace(/^.+,/, "");
+	// 	const Bg = getImage(document.getElementById("bg"))
+	// 	.src
+	// 	.replace("data:", "").replace(/^.+,/, "");
+
+	// 	const firstRequestOptions = prepareRequestOptions([
+	// 		["base64image", Bg], 
+	// 		["image_name", filename],
+	// 		["angle", angle]
+	// 	]);
+	// 	const bgResult = await fetch(API_URL + "/rotate", firstRequestOptions)
+	// 	.then(response => response.json())
+	// 	.catch(error => console.log(`error occured on sending rotate req`));
+	// 	await resizeCanvases(bgResult.meta.width, bgResult.meta.height).then((x)=>console.log(x));
+	// 	await loadImgToBgCv(bgResult.bs64img, bgResult.meta.width, bgResult.meta.height, bgResult.meta.format)
+	// 	.then((x)=>console.log(x));
 		
 		
-		const secondRequestOptions = prepareRequestOptions([
-			["base64image", Fg], 
-			["image_name", filename],
-			["angle", angle]
-		]);
-		const fgResult = await fetch(API_URL + "/rotate", secondRequestOptions)
-		.then(response => response.json())
-		.catch(error => console.log(`error occured on sending rotate req`));
-		await loadImgToFgCv(fgResult.bs64img, fgResult.meta.width, fgResult.meta.height, fgResult.meta.format)
-		.then((x)=>console.log(x));
-		picsCashe.casheMut(true);
-		document.querySelector('#resizeInp').value = 2
-	}
+	// 	const secondRequestOptions = prepareRequestOptions([
+	// 		["base64image", Fg], 
+	// 		["image_name", filename],
+	// 		["angle", angle]
+	// 	]);
+	// 	const fgResult = await fetch(API_URL + "/rotate", secondRequestOptions)
+	// 	.then(response => response.json())
+	// 	.catch(error => console.log(`error occured on sending rotate req`));
+	// 	await loadImgToFgCv(fgResult.bs64img, fgResult.meta.width, fgResult.meta.height, fgResult.meta.format)
+	// 	.then((x)=>console.log(x));
+	// 	picsCashe.casheMut(true);
+	// 	document.querySelector('#resizeInp').value = 2
+	// }
 
 
-	const getImage = canvas =>{
-    	let imageData = canvas.toDataURL();
-    	let image = new Image();
-    	image.src = imageData;
-		// image.crossOrigin = 'Anonymous'
-    	return image;
-	}
+	// const getImage = canvas =>{
+    // 	let imageData = canvas.toDataURL();
+    // 	let image = new Image();
+    // 	image.src = imageData;
+	// 	// image.crossOrigin = 'Anonymous'
+    // 	return image;
+	// }
 
-	const rewriteCache = (mutability) => new Promise((resolve, reject) =>{
-		console.log('called rewritor')
-		const Fg = getImage(document.getElementById("fg"))
-		.src
-		.replace("data:", "").replace(/^.+,/, "");
-		const Bg = getImage(document.getElementById("bg"))
-		.src
-		.replace("data:", "").replace(/^.+,/, "");
-		picsCashe.changeCashe([Bg, Fg]);
-		picsCashe.casheMut(mutability);
-		resolve(picsCashe.getCache())
-		reject('cache error ')
-	});
+	// const rewriteCache = (mutability) => new Promise((resolve, reject) =>{
+	// 	console.log('called rewritor')
+	// 	const Fg = getImage(document.getElementById("fg"))
+	// 	.src
+	// 	.replace("data:", "").replace(/^.+,/, "");
+	// 	const Bg = getImage(document.getElementById("bg"))
+	// 	.src
+	// 	.replace("data:", "").replace(/^.+,/, "");
+	// 	picsCashe.changeCashe([Bg, Fg]);
+	// 	picsCashe.casheMut(mutability);
+	// 	resolve(picsCashe.getCache())
+	// 	reject('cache error ')
+	// });
 
 
-	async function handleScaleInput() {
-		const [Bg, Fg] = await rewriteCache(false).then(x => x)
+	// async function handleScaleInput() {
+	// 	const [Bg, Fg] = await rewriteCache(false).then(x => x)
 
-		const firstRequestOptions = prepareRequestOptions([
-			["base64image", Bg], 
-			["image_name", filename],
-			["kf", Number(document.querySelector('#resizeInp').value) / 2]
-		]);
-		const bgResult = await fetch(API_URL + "/resize", firstRequestOptions)
-		.then(response => response.json())
-		.catch(error => console.log(`error occured on sending rotate req`));
-		await resizeCanvases(bgResult.meta.width, bgResult.meta.height).then((x)=>console.log(x));
-		await loadImgToBgCv(bgResult.bs64img, bgResult.meta.width, bgResult.meta.height, bgResult.meta.format)
-		.then((x)=>console.log(x));
+	// 	const firstRequestOptions = prepareRequestOptions([
+	// 		["base64image", Bg], 
+	// 		["image_name", filename],
+	// 		["kf", Number(document.querySelector('#resizeInp').value) / 2]
+	// 	]);
+	// 	const bgResult = await fetch(API_URL + "/resize", firstRequestOptions)
+	// 	.then(response => response.json())
+	// 	.catch(error => console.log(`error occured on sending rotate req`));
+	// 	await resizeCanvases(bgResult.meta.width, bgResult.meta.height).then((x)=>console.log(x));
+	// 	await loadImgToBgCv(bgResult.bs64img, bgResult.meta.width, bgResult.meta.height, bgResult.meta.format)
+	// 	.then((x)=>console.log(x));
 
-		const secondRequestOptions = prepareRequestOptions([
-			["base64image", Fg], 
-			["image_name", filename],
-			["kf", Number(document.querySelector('#resizeInp').value)/2]
-		]);
-		const fgResult = await fetch(API_URL + "/resize", secondRequestOptions)
-		.then(response => response.json())
-		.catch(error => console.log(`error occured on sending rotate req`));
-		await loadImgToFgCv(fgResult.bs64img, fgResult.meta.width, fgResult.meta.height, fgResult.meta.format)
-		.then((x)=>console.log(x));
-	}
+	// 	const secondRequestOptions = prepareRequestOptions([
+	// 		["base64image", Fg], 
+	// 		["image_name", filename],
+	// 		["kf", Number(document.querySelector('#resizeInp').value)/2]
+	// 	]);
+	// 	const fgResult = await fetch(API_URL + "/resize", secondRequestOptions)
+	// 	.then(response => response.json())
+	// 	.catch(error => console.log(`error occured on sending rotate req`));
+	// 	await loadImgToFgCv(fgResult.bs64img, fgResult.meta.width, fgResult.meta.height, fgResult.meta.format)
+	// 	.then((x)=>console.log(x));
+	// }
 
 	// функция изменяющая размер кисти через ползунок
 	const changeBrushSize = () => {
