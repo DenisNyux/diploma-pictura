@@ -157,6 +157,11 @@ export const MyCanvas = () => {
 			canvasFg.addEventListener('click', mouseRectCoordEvent);
 		}
 
+		const mouseCropFunc = () => {
+			removeListeners();
+			canvasFg.addEventListener('click', mouseRectCropEvent);
+		}
+
 		const circleFunc = () => {
 			removeListeners();
 			canvasFg.addEventListener('click', mouseCircleCoordEvent);
@@ -209,6 +214,43 @@ export const MyCanvas = () => {
 			document.querySelector('#resizeInp').value = 2
 		}
 
+
+		let cropCoord = [];
+		const mouseRectCropEvent = (e) => {
+			setMouseCoordinates(e);
+			cropCoord.push({
+				x: mouseX,
+				y: mouseY,
+			});
+			
+			// console.log(cropCoord);
+			if (cropCoord.length === 2) {
+				// console.log(cropCoord);
+				// console.log(canvasFg.width, canvasFg.height)
+
+				const qWidth = Math.abs(cropCoord[0].x - cropCoord[1].x)
+				const qHeight = Math.abs(cropCoord[0].y - cropCoord[1].y)
+				const qTop = cropCoord[0].y < cropCoord[1].y ? cropCoord[0].y : cropCoord[1].y
+				const qLeft = cropCoord[0].x < cropCoord[1].x ? cropCoord[0].x : cropCoord[1].x
+				console.log(qHeight, qWidth, qLeft, qTop)
+
+				try{
+					sendCrop(qLeft, qTop, qWidth, qHeight)
+				}
+				catch {
+					console.log('err on crop')
+				}
+				// picsCashe.rewriteCache(false);
+				// const [bgPath, fgPath] = picsCashe.getCache();
+				// fetch(`${API_URL}crop?path${bgPath}`)
+
+				cropCoord.length = 0
+				canvasFg.removeEventListener('click',mouseRectCropEvent);
+			}
+			picsCashe.casheMut(true);
+			document.querySelector('#resizeInp').value = 2;
+		}
+
 		const mouseCircleCoordEvent = (e) => {
 			console.log(coord);
 			setMouseCoordinates(e);
@@ -245,6 +287,9 @@ export const MyCanvas = () => {
 		
 		const brushBtn = document.getElementById('mybrushBtn');
 		brushBtn.addEventListener('click', brushFunc);
+
+		const cropBtn = document.getElementById('cropBtn');
+		cropBtn.addEventListener('click', mouseCropFunc);
 		
 		//переключение режима кисти на ластик
 		const eraseBtn = document.getElementById('eraseBtn');
@@ -326,6 +371,8 @@ export const MyCanvas = () => {
 		},
 		rewriteCache: async function(mutability) {
 			if (this.changable){
+				// await fetch(API_URL + '?path=' + bgResult.path, {method: 'DELETE'})
+				// await fetch(API_URL + '?path=' + fgResult.path, {method: 'DELETE'})
 				const Fg = getImage(document.getElementById("fg"))
 				.src
 				.replace("data:", "").replace(/^.+,/, "");
@@ -348,8 +395,7 @@ export const MyCanvas = () => {
 				this.casheMut(mutability);
 				// return [bgResult.path, fgResult.path]
 
-				// await fetch(API_URL + '?path=' + bgResult.path, {method: 'DELETE'})
-				// await fetch(API_URL + '?path=' + fgResult.path, {method: 'DELETE'})
+				
 			}
 			else {
 				console.log('cant change cache')
@@ -510,23 +556,21 @@ export const MyCanvas = () => {
 			["angle", angle]
 		]);
 
-		const bgResult = await fetch(API_URL + "/rotate", firstRequestOptions)
+		const bgResult = await fetch(API_URL + "rotate", firstRequestOptions)
 		.then(response => response.json())
 		// .then(x => console.log(x))
 		.catch(error => console.log(`error occured on sending rotate req`));
 		await resizeCanvases(bgResult.meta.width, bgResult.meta.height).then((x)=>console.log(x));
 		await loadImgToBgCv(bgResult.bs64string, bgResult.meta.width, bgResult.meta.height, bgResult.meta.format)
 		.then((x)=>console.log(x));
-		fetch(API_URL + '?path=' + bgPath, {method: 'DELETE'})
-		setBgPath(bgResult.path)
+		
 
-		const fgResult = await fetch(API_URL + "/rotate", secondRequestOptions)
+		const fgResult = await fetch(API_URL + "rotate", secondRequestOptions)
 		.then(response => response.json())
 		.catch(error => console.log(`error occured on sending rotate req`));
 		await loadImgToFgCv(fgResult.bs64string, fgResult.meta.width, fgResult.meta.height, fgResult.meta.format)
 		.then((x)=>console.log(x));
-		fetch(API_URL + '?path=' + fgPath, {method: 'DELETE'})
-		setFgPath(fgResult.path)
+		
 
 		document.querySelector('#resizeInp').value = 2
 		picsCashe.casheMut(true);
@@ -538,11 +582,124 @@ export const MyCanvas = () => {
 
 	async function handleScaleChange() {
 		await picsCashe.rewriteCache(false);
-		const [bgPath, fgPath] = picsCashe.getCache()
+		const [bgPath, fgPath] = picsCashe.getCache();
+		const kf = Number(document.querySelector('#resizeInp').value) / 2;
 		
-		
+		const bgResult = await fetch(`${API_URL}resize?path=${bgPath}&kf=${kf}`, {method: 'GET'})
+		.then(x=>x.json())
+		await resizeCanvases(bgResult.meta.width, bgResult.meta.height).then((x)=>console.log(x));
+		await loadImgToBgCv(bgResult.bs64string, bgResult.meta.width, bgResult.meta.height, bgResult.meta.format)
+		.then((x)=>console.log(x));
+
+
+		const fgResult = await fetch(`${API_URL}resize?path=${fgPath}&kf=${kf}`, {method: 'GET'})
+		.then(x=>x.json())
+		await loadImgToFgCv(fgResult.bs64string, fgResult.meta.width, fgResult.meta.height, fgResult.meta.format)
+		.then((x)=>console.log(x));
+
+
 	}
 
+	async function sendCrop(lt, tp, wd, hg){
+		const Fg = getImage(document.getElementById("fg"))
+		.src
+		.replace("data:", "").replace(/^.+,/, "");
+		const Bg = getImage(document.getElementById("bg"))
+		.src
+		.replace("data:", "").replace(/^.+,/, "");
+
+		const firstRequestOptions = prepareRequestOptions([
+			["base64image", Bg], 
+			["image_name", filename],
+			["left", lt],
+			["top", tp],
+			["width", wd],
+			["height", hg]
+		]);
+
+		const secondRequestOptions = prepareRequestOptions([
+			["base64image", Fg], 
+			["image_name", filename],
+			["left", lt],
+			["top", tp],
+			["width", wd],
+			["height", hg]
+		]);
+
+		const bgResult = await fetch(API_URL + "crop", firstRequestOptions)
+		.then(response => response.json())
+		.catch(error => console.log(`error occured on sending rotate req`));
+		await resizeCanvases(bgResult.meta.width, bgResult.meta.height).then((x)=>console.log(x));
+		await loadImgToBgCv(bgResult.bs64string, bgResult.meta.width, bgResult.meta.height, bgResult.meta.format)
+		.then((x)=>console.log(x));
+		
+
+		const fgResult = await fetch(API_URL + "crop", secondRequestOptions)
+		.then(response => response.json())
+		.catch(error => console.log(`error occured on sending rotate req`));
+		await loadImgToFgCv(fgResult.bs64string, fgResult.meta.width, fgResult.meta.height, fgResult.meta.format)
+		.then((x)=>console.log(x));
+
+	}
+
+	async function handleScaleChange() {
+		await picsCashe.rewriteCache(false);
+		const [bgPath, fgPath] = picsCashe.getCache();
+		const kf = Number(document.querySelector('#resizeInp').value) / 2;
+		
+		const bgResult = await fetch(`${API_URL}resize?path=${bgPath}&kf=${kf}`, {method: 'GET'})
+		.then(x=>x.json())
+		await resizeCanvases(bgResult.meta.width, bgResult.meta.height).then((x)=>console.log(x));
+		await loadImgToBgCv(bgResult.bs64string, bgResult.meta.width, bgResult.meta.height, bgResult.meta.format)
+		.then((x)=>console.log(x));
+
+
+		const fgResult = await fetch(`${API_URL}resize?path=${fgPath}&kf=${kf}`, {method: 'GET'})
+		.then(x=>x.json())
+		await loadImgToFgCv(fgResult.bs64string, fgResult.meta.width, fgResult.meta.height, fgResult.meta.format)
+		.then((x)=>console.log(x));
+	}
+
+
+	async function gauss(kf) {
+		const Fg = getImage(document.getElementById("fg"))
+		.src
+		.replace("data:", "").replace(/^.+,/, "");
+		const Bg = getImage(document.getElementById("bg"))
+		.src
+		.replace("data:", "").replace(/^.+,/, "");
+
+		const firstRequestOptions = prepareRequestOptions([
+			["base64image", Bg], 
+			["image_name", filename],
+			["kf", kf]
+		]);
+
+		const secondRequestOptions = prepareRequestOptions([
+			["base64image", Fg], 
+			["image_name", filename],
+			["angle", kf]
+		]);
+
+		const bgResult = await fetch(API_URL + "gblur", firstRequestOptions)
+		.then(response => response.json())
+		// .then(x => console.log(x))
+		.catch(error => console.log(`error occured on sending rotate req`));
+		await resizeCanvases(bgResult.meta.width, bgResult.meta.height).then((x)=>console.log(x));
+		await loadImgToBgCv(bgResult.bs64string, bgResult.meta.width, bgResult.meta.height, bgResult.meta.format)
+		.then((x)=>console.log(x));
+		
+
+		const fgResult = await fetch(API_URL + "gblur", secondRequestOptions)
+		.then(response => response.json())
+		.catch(error => console.log(`error occured on sending rotate req`));
+		await loadImgToFgCv(fgResult.bs64string, fgResult.meta.width, fgResult.meta.height, fgResult.meta.format)
+		.then((x)=>console.log(x));
+		
+
+		document.querySelector('#resizeInp').value = 2
+		picsCashe.casheMut(true);
+	}
 
 
 	
@@ -792,7 +949,7 @@ export const MyCanvas = () => {
 					<NavText>Поворот</NavText>
 				</NavItem>
 
-				<NavItem className="navItem" id='cropBtn' onClick = {() => setCropModalActive(true)}>
+				<NavItem className="navItem" id='cropBtn'>
             		<NavIcon><img className='icon1' alt='crop' src={iconCrop}></img></NavIcon>
 					<NavText>Обрезка</NavText>
 				</NavItem>
