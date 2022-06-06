@@ -310,52 +310,7 @@ export const MyCanvas = () => {
 
 	let encoded
 
-	let picsCashe = {
-		bg_path: null,
-		fg_path: null,
-		changable: true,
-		casheMut: function(bool_val) {
-			this.changable = bool_val
-		},
-		setCashe: function(values) {
-			this.bg_path = values[0];
-			this.fg_path = values[1];
-		},
-		getCache: function(){
-			return [this.bg_path, this.fg_path]
-		},
-		rewriteCache: async function(mutability) {
-			if (this.changable){
-				const Fg = getImage(document.getElementById("fg"))
-				.src
-				.replace("data:", "").replace(/^.+,/, "");
-				const Bg = getImage(document.getElementById("bg"))
-				.src
-				.replace("data:", "").replace(/^.+,/, "");
 
-				const firstRequestOptions = prepareRequestOptions([["base64image", Bg]]);
-				const secondRequestOptions = prepareRequestOptions([["base64image", Fg]]);
-
-				const bgResult = await fetch(API_URL, firstRequestOptions)
-				.then(response => response.json())
-				.catch(error => console.log(`error occured on saving`));
-
-				const fgResult = await fetch(API_URL, secondRequestOptions)
-				.then(response => response.json())
-				.catch(error => console.log(`error occured on saving`));
-
-				this.setCashe([bgResult.path, fgResult.path]);
-				this.casheMut(mutability);
-				// return [bgResult.path, fgResult.path]
-
-				// await fetch(API_URL + '?path=' + bgResult.path, {method: 'DELETE'})
-				// await fetch(API_URL + '?path=' + fgResult.path, {method: 'DELETE'})
-			}
-			else {
-				console.log('cant change cache')
-			}
-		}
-	}
 
 
 	async function handleChange(ev) {
@@ -402,7 +357,7 @@ export const MyCanvas = () => {
 		setLoadModalActive(false);
 
 		picsCashe.casheMut(true);
-
+		// rewriteCache(true);
 	}
 
 	const resizeCanvases = (wdh, hgt) => new Promise((resolve, reject) => {
@@ -482,7 +437,7 @@ export const MyCanvas = () => {
 		setLoadModalActive(false);
 		
 		picsCashe.casheMut(true);
-
+		// rewriteCache(true)
   	}
 
 
@@ -533,14 +488,69 @@ export const MyCanvas = () => {
 		// await fetch(API_URL + '?path=' + path, {method: 'DELETE'})
 	}
 
+	let picsCashe = {
+		bg_src: null,
+		fg_src: null,
+		changable: true,
+		casheMut: function(bool_val) {
+			this.changable = bool_val
+		},
+		changeCashe: function(values) {
+			if (this.changable===true) {
+				this.bg_src = values[0];
+				this.fg_src = values[1];
+				console.log('cache changed')	
+			} else {
+				console.log('cant change cache')
+			} 
+			
+		},
+		getCache: function(){
+			return [this.bg_src, this.fg_src]
+		}
+	}
 
-	
+	const rewriteCache = (mutability) => new Promise((resolve, reject) =>{
+		console.log('called rewritor')
+		const Fg = getImage(document.getElementById("fg"))
+		.src
+		.replace("data:", "").replace(/^.+,/, "");
+		const Bg = getImage(document.getElementById("bg"))
+		.src
+		.replace("data:", "").replace(/^.+,/, "");
+		picsCashe.changeCashe([Bg, Fg]);
+		picsCashe.casheMut(mutability);
+		resolve(picsCashe.getCache())
+		reject('cache error ')
+	});
 
 	async function handleScaleChange() {
-		await picsCashe.rewriteCache(false);
-		const [bgPath, fgPath] = picsCashe.getCache()
-		
-		
+		const [Bg, Fg] = await rewriteCache(false).then(x => x)
+
+		const firstRequestOptions = prepareRequestOptions([
+			["base64image", Bg], 
+			["image_name", filename],
+			["kf", Number(document.querySelector('#resizeInp').value) / 2]
+		]);
+		const bgResult = await fetch(API_URL + "/resize", firstRequestOptions)
+		.then(response => response.json())
+		.catch(error => console.log(`error occured on sending rotate req`));
+		await resizeCanvases(bgResult.meta.width, bgResult.meta.height).then((x)=>console.log(x));
+		await loadImgToBgCv(bgResult.bs64string, bgResult.meta.width, bgResult.meta.height, bgResult.meta.format)
+		.then((x)=>console.log(x));
+		fetch(API_URL + '?path=' + bgResult.path, {method: 'DELETE'})
+
+		const secondRequestOptions = prepareRequestOptions([
+			["base64image", Fg], 
+			["image_name", filename],
+			["kf", Number(document.querySelector('#resizeInp').value)/2]
+		]);
+		const fgResult = await fetch(API_URL + "/resize", secondRequestOptions)
+		.then(response => response.json())
+		.catch(error => console.log(`error occured on sending rotate req`));
+		await loadImgToFgCv(fgResult.bs64string, fgResult.meta.width, fgResult.meta.height, fgResult.meta.format)
+		.then((x)=>console.log(x));
+		fetch(API_URL + '?path=' + fgResult.path, {method: 'DELETE'})
 	}
 
 
