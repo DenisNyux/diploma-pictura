@@ -1,6 +1,6 @@
 testing_index.html
 show_image.js
-serv/package.json
-serv/package-lock.json
+serv-pictura/package.json
+serv-pictura/package-lock.json
 client/package-lock.json
-serv/package.json
+serv-pictura/node_modules

@@ -203,10 +203,29 @@ export const MyCanvas = () => {
 				isDrawing = false;
 				canvasFg.removeEventListener('click',mouseRectCoordEvent);
 				coord.length = 0;
-			
 			}
 			picsCashe.casheMut(true);
-			document.querySelector('#resizeInp').value = 2
+			document.querySelector('#resizeInp').value = 2;
+		}
+
+		const mouseRectCropEvent = (e) => {
+			let cropCoord = [];
+			console.log(cropCoord);
+			setMouseCoordinates(e);
+			
+			cropCoord.push({
+				x: mouseX,
+				y: mouseY,
+			});
+			
+			if (cropCoord.length === 2) {
+
+
+
+				canvasFg.removeEventListener('click',mouseRectCropEvent);
+			}
+			picsCashe.casheMut(true);
+			document.querySelector('#resizeInp').value = 2;
 		}
 
 		const mouseCircleCoordEvent = (e) => {
@@ -245,6 +264,9 @@ export const MyCanvas = () => {
 		
 		const brushBtn = document.getElementById('mybrushBtn');
 		brushBtn.addEventListener('click', brushFunc);
+
+		const cropBtn = document.getElementById('cropBtn');
+		rectBtn.addEventListener('click', mouseRectCropEvent);
 		
 		//переключение режима кисти на ластик
 		const eraseBtn = document.getElementById('eraseBtn');
@@ -802,7 +824,7 @@ export const MyCanvas = () => {
 					<NavText>Поворот</NavText>
 				</NavItem>
 
-				<NavItem className="navItem" id='cropBtn' onClick = {() => setCropModalActive(true)}>
+				<NavItem className="navItem" id='cropBtn'>
             		<NavIcon><img className='icon1' alt='crop' src={iconCrop}></img></NavIcon>
 					<NavText>Обрезка</NavText>
 				</NavItem>
