@@ -14,6 +14,7 @@ import iconUndo from './icons/undo.svg';
 import iconCounterclock from './icons/arrow-counterclockwise.svg';
 import iconClockwise from './icons/arrow-clockwise.svg';
 import iconFilter from './icons/asterisk.svg';
+import iconGauss from './icons/bullseye.svg';
 import React, { useState } from 'react';
 import Modal from './Modal/Modal';
 import { Form, FormGroup, Label, Input, Button} from 'reactstrap';
@@ -29,6 +30,7 @@ export const MyCanvas = () => {
 	const [eraseModalActive, setEraseModalActive] = useState(false);
 	const [cropModalActive, setCropModalActive] = useState(false);
 	const [filterModalActive, setFilterModalActive] = useState(false);
+	const [gaussModalActive, setGaussModalActive] = useState(false);
 	const [drag, setDrag] = useState(false); // состояние перетаскивания
 	const [rotateModalActive, setRotateModalActive] = useState(false);
 	const [openEr,setOpenErase] = useState(false); // состояние dropdown кисти
@@ -37,10 +39,11 @@ export const MyCanvas = () => {
 	const [eraseVal, setEraseVal] = useState(20); // состояние размера ластика
 	const [color, setColor] = useState("#aabbcc"); //состояние палитры
 	const [angleValue, setAngleValue] = useState("0"); // состояние угла
-	const [bs64, setBs64] = useState("")
-	const [filename, setName] = useState("")
-	const [bgPath, setBgPath] = useState("")
-	const [fgPath, setFgPath] = useState("")
+	const [bs64, setBs64] = useState("");
+	const [filename, setName] = useState("");
+	const [bgPath, setBgPath] = useState("");
+	const [fgPath, setFgPath] = useState("");
+	const [gaussVal, setGaussVal] = useState(0);
 
 	const API_URL = "http://palitra-redactor.ru:3030/api/"
 	
@@ -301,56 +304,56 @@ export const MyCanvas = () => {
 			ctxFg.globalCompositeOperation = 'destination-out';
 		})
 
-		function redrawAll(){
+	// 	function redrawAll(){
 
-			if(points.length===0){return;}
+	// 		if(points.length===0){return;}
 	
-			ctxFg.clearRect(0,0,canvasFg.width,canvasFg.height);
+	// 		ctxFg.clearRect(0,0,canvasFg.width,canvasFg.height);
 	
-			for(let i=0;i<points.length;i++){
+	// 		for(let i=0;i<points.length;i++){
 	
-			  let pt=points[i];
+	// 		  let pt=points[i];
 	
-			  if(ctxFg.lineWidth!==pt.size){
-				  ctxFg.lineWidth=pt.size;
-			  }
-			  if(ctxFg.strokeStyle!==pt.color){
-				  ctxFg.strokeStyle=pt.color;
-			  }
-			  if(ctxFg.globalCompositeOperation!==pt.eraseMode){
-				ctxFg.globalCompositeOperation=pt.eraseMode;
-				}
-			  if(pt.mode==="begin"){
-				  ctxFg.beginPath();
-				  ctxFg.moveTo(pt.x,pt.y);
-			  }
-			  ctxFg.lineTo(pt.x,pt.y);
-			  if(pt.mode === "end" || (i===points.length-1)){
-				  ctxFg.stroke();
-			  }
-			}
+	// 		  if(ctxFg.lineWidth!==pt.size){
+	// 			  ctxFg.lineWidth=pt.size;
+	// 		  }
+	// 		  if(ctxFg.strokeStyle!==pt.color){
+	// 			  ctxFg.strokeStyle=pt.color;
+	// 		  }
+	// 		  if(ctxFg.globalCompositeOperation!==pt.eraseMode){
+	// 			ctxFg.globalCompositeOperation=pt.eraseMode;
+	// 			}
+	// 		  if(pt.mode==="begin"){
+	// 			  ctxFg.beginPath();
+	// 			  ctxFg.moveTo(pt.x,pt.y);
+	// 		  }
+	// 		  ctxFg.lineTo(pt.x,pt.y);
+	// 		  if(pt.mode === "end" || (i===points.length-1)){
+	// 			  ctxFg.stroke();
+	// 		  }
+	// 		}
 
-			ctxFg.stroke();
-		}
+	// 		ctxFg.stroke();
+	// 	}
 	
-		function undoLast(){
-			//console.log(points);
-			points.pop();
-			//console.log(points);
-			redrawAll();
-		}
-		const undoBtn = document.querySelector('#undo');
-		let interval;
-		const undoFuncDown = () => {
-		interval = setInterval(undoLast, 10);
-		}
-		const undoFuncUp = () => {
-			clearInterval(interval);
-			if(points.length!==0){points[points.length-1].mode =  "end";}
-		}
+	// 	function undoLast(){
+	// 		//console.log(points);
+	// 		points.pop();
+	// 		//console.log(points);
+	// 		redrawAll();
+	// 	}
+	// 	const undoBtn = document.querySelector('#undo');
+	// 	let interval;
+	// 	const undoFuncDown = () => {
+	// 	interval = setInterval(undoLast, 10);
+	// 	}
+	// 	const undoFuncUp = () => {
+	// 		clearInterval(interval);
+	// 		if(points.length!==0){points[points.length-1].mode =  "end";}
+	// 	}
 
-		undoBtn.addEventListener('mousedown', undoFuncDown);
-		undoBtn.addEventListener('mouseup', undoFuncUp);
+	// 	undoBtn.addEventListener('mousedown', undoFuncDown);
+	// 	undoBtn.addEventListener('mouseup', undoFuncUp);
     });
 
 	let encoded
@@ -882,7 +885,12 @@ export const MyCanvas = () => {
 		link.setAttribute("download", "canvasImage");
 		link.click();
 	}
+	// изм коэф Гаусса
 
+	const changeGaussKf = () => {
+		const gaussInp = document.querySelector('#gauss');
+		setGaussVal(gaussInp.value);
+	}
 	const saveImgBtn = () =>{
 		const canvasSave = document.getElementById("readyimg");
 		const canvasFg = document.getElementById("fg");
@@ -904,11 +912,11 @@ export const MyCanvas = () => {
     return (
         <div>
 			<MySideNav>
-				<NavItem id="undo">
+				{/* <NavItem id="undo">
 					<NavIcon><img className='icon1' alt='icon1' src={iconUndo}></img></NavIcon>
 					<NavText>Отменить действие</NavText>
 				
-				</NavItem>
+				</NavItem> */}
 
           		<NavItem className="navItem" onClick = {() => setLoadModalActive(true)}>
             		<NavIcon><img className='icon1' alt='icon1' src={iconLoad}></img></NavIcon>
@@ -952,6 +960,10 @@ export const MyCanvas = () => {
 				<NavItem className="navItem" id='cropBtn'>
             		<NavIcon><img className='icon1' alt='crop' src={iconCrop}></img></NavIcon>
 					<NavText>Обрезка</NavText>
+				</NavItem>
+				<NavItem className="navItem" id='gaussBtn' onClick = {() => setGaussModalActive(true)}>
+            		<NavIcon><img className='icon1' alt='gauss' src={iconGauss}></img></NavIcon>
+					<NavText>Размытие по Гауссу</NavText>
 				</NavItem>
 				<NavItem className="navItem" id='filterBtn' onClick = {() => setFilterModalActive(true)}>
             		<NavIcon><img className='icon1' alt='filter' src={iconFilter}></img></NavIcon>
@@ -1073,7 +1085,7 @@ export const MyCanvas = () => {
 				</Form>
 			</Modal>
 
-			<Modal active={filterModalActive} setActive={setFilterModalActive}>
+			<Modal active={gaussModalActive} setActive={setGaussModalActive}>
 				<Form>
 					<FormGroup>
 						<Label for="gauss">Размытие по Гауссу</Label>
@@ -1081,10 +1093,17 @@ export const MyCanvas = () => {
 							id="gauss"
 							name="gauss"
 							type="text"
+							onChange={changeGaussKf}
+							value={gaussVal}
 						/>
 					</FormGroup>
-					<Button type='button' className={classes.button}>Ок</Button>
+					<Button type='button' className={classes.button} onClick={() => gauss(gaussVal)}>Ок</Button>
 				</Form>
+			</Modal>
+			<Modal active={filterModalActive} setActive={setFilterModalActive}>
+				<Button type='button' className={classes.button}>Негатив</Button>
+				<Button type='button' className={classes.button}>Черно-белый</Button>
+				<Button type='button' className={classes.button}>Сепия</Button>
 			</Modal>
 			<div id="resize">
 			<div>Масштаб</div>
