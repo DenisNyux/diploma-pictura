@@ -94,11 +94,11 @@ async function gBlur(buf, params) {
     }
 }
 
-async function greyscale(buf, params) {
+async function greyscale(buf) {
     try {
       return await sharp(buf)
         .png()
-        .blur(params[0])
+        .greyscale()
         .toBuffer()
         .then(data => data)
     } catch (error) {
@@ -106,6 +106,18 @@ async function greyscale(buf, params) {
     }
 }
 
+async function negate(buf) {
+  try {
+    return await sharp(buf)
+      .png()
+      .negate({ alpha: false })
+      .toBuffer()
+      .then(data => data)
+  } catch (error) {
+    console.log(error);
+  }
+}
+
 module.exports = {
-    getMetadata, greyscale, cropImage, resizeImage, gBlur, flopImage, flipImage, rotateImage
+    getMetadata, greyscale, cropImage, resizeImage, gBlur, flopImage, flipImage, rotateImage, negate
 }

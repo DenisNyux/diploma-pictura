@@ -45,7 +45,7 @@ export const MyCanvas = () => {
 	const [fgPath, setFgPath] = useState("");
 	const [gaussVal, setGaussVal] = useState(0);
 
-	const API_URL = "http://palitra-redactor.ru:3030/api/"
+	const API_URL = "http://palitra-redactor.ru:8080/api/"
 	
 
     window.addEventListener("load", function onWindowLoad(){
@@ -436,7 +436,7 @@ export const MyCanvas = () => {
 
 	async function handleSubmit(event) {
 		event.preventDefault();
-		await fetch(API_URL + '?path=' + bgPath, {method: 'DELETE'})
+		// await fetch(API_URL + '?path=' + bgPath, {method: 'DELETE'})
 		const requestOptions = prepareRequestOptions([["base64image", bs64], ["image_name", filename]])
 		const result = await fetch(API_URL, requestOptions)
 		.then(response =>
@@ -514,7 +514,7 @@ export const MyCanvas = () => {
 
   	async function onDropHandler(e) {
     	e.preventDefault();
-		await fetch(API_URL + '?path=' + bgPath, {method: 'DELETE'})
+		// await fetch(API_URL + '?path=' + bgPath, {method: 'DELETE'})
 		setDrag(false); 
 		const file = e.dataTransfer.files[0]
 		console.log(file)
@@ -675,19 +675,18 @@ export const MyCanvas = () => {
 		const firstRequestOptions = prepareRequestOptions([
 			["base64image", Bg], 
 			["image_name", filename],
-			["kf", kf]
+			["sigma", kf]
 		]);
 
 		const secondRequestOptions = prepareRequestOptions([
 			["base64image", Fg], 
 			["image_name", filename],
-			["angle", kf]
+			["sigma", kf]
 		]);
-
+		console.log(API_URL + "gblur", firstRequestOptions)
 		const bgResult = await fetch(API_URL + "gblur", firstRequestOptions)
 		.then(response => response.json())
 		// .then(x => console.log(x))
-		.catch(error => console.log(`error occured on sending rotate req`));
 		await resizeCanvases(bgResult.meta.width, bgResult.meta.height).then((x)=>console.log(x));
 		await loadImgToBgCv(bgResult.bs64string, bgResult.meta.width, bgResult.meta.height, bgResult.meta.format)
 		.then((x)=>console.log(x));
@@ -705,8 +704,79 @@ export const MyCanvas = () => {
 	}
 
 
-	
+	async function chb() {
+		const Fg = getImage(document.getElementById("fg"))
+		.src
+		.replace("data:", "").replace(/^.+,/, "");
+		const Bg = getImage(document.getElementById("bg"))
+		.src
+		.replace("data:", "").replace(/^.+,/, "");
 
+		const firstRequestOptions = prepareRequestOptions([
+			["base64image", Bg], 
+			["image_name", filename]
+		]);
+
+		const secondRequestOptions = prepareRequestOptions([
+			["base64image", Fg], 
+			["image_name", filename]
+		]);
+
+		const bgResult = await fetch(API_URL + "/filter/greyscale", firstRequestOptions)
+		.then(response => response.json())
+		// .then(x => console.log(x))
+		await resizeCanvases(bgResult.meta.width, bgResult.meta.height).then((x)=>console.log(x));
+		await loadImgToBgCv(bgResult.bs64string, bgResult.meta.width, bgResult.meta.height, bgResult.meta.format)
+		.then((x)=>console.log(x));
+		
+
+		const fgResult = await fetch(API_URL + "/filter/greyscale", secondRequestOptions)
+		.then(response => response.json())
+		.catch(error => console.log(`error occured on sending rotate req`));
+		await loadImgToFgCv(fgResult.bs64string, fgResult.meta.width, fgResult.meta.height, fgResult.meta.format)
+		.then((x)=>console.log(x));
+		
+
+		document.querySelector('#resizeInp').value = 2
+		picsCashe.casheMut(true);
+	}
+	
+	async function negate() {
+		const Fg = getImage(document.getElementById("fg"))
+		.src
+		.replace("data:", "").replace(/^.+,/, "");
+		const Bg = getImage(document.getElementById("bg"))
+		.src
+		.replace("data:", "").replace(/^.+,/, "");
+
+		const firstRequestOptions = prepareRequestOptions([
+			["base64image", Bg], 
+			["image_name", filename]
+		]);
+
+		const secondRequestOptions = prepareRequestOptions([
+			["base64image", Fg], 
+			["image_name", filename]
+		]);
+
+		const bgResult = await fetch(API_URL + "/filter/negate", firstRequestOptions)
+		.then(response => response.json())
+		// .then(x => console.log(x))
+		await resizeCanvases(bgResult.meta.width, bgResult.meta.height).then((x)=>console.log(x));
+		await loadImgToBgCv(bgResult.bs64string, bgResult.meta.width, bgResult.meta.height, bgResult.meta.format)
+		.then((x)=>console.log(x));
+		
+
+		const fgResult = await fetch(API_URL + "/filter/negate", secondRequestOptions)
+		.then(response => response.json())
+		.catch(error => console.log(`error occured on sending rotate req`));
+		await loadImgToFgCv(fgResult.bs64string, fgResult.meta.width, fgResult.meta.height, fgResult.meta.format)
+		.then((x)=>console.log(x));
+		
+
+		document.querySelector('#resizeInp').value = 2
+		picsCashe.casheMut(true);
+	}
 
 	// async function rotateImage(angle) {
 	// 	const Fg = getImage(document.getElementById("fg"))
@@ -1101,8 +1171,8 @@ export const MyCanvas = () => {
 				</Form>
 			</Modal>
 			<Modal active={filterModalActive} setActive={setFilterModalActive}>
-				<Button type='button' className={classes.button}>Негатив</Button>
-				<Button type='button' className={classes.button}>Черно-белый</Button>
+				<Button type='button' className={classes.button} onClick={negate}>Негатив</Button>
+				<Button type='button' className={classes.button} onClick={chb}>Черно-белый</Button>
 				<Button type='button' className={classes.button}>Сепия</Button>
 			</Modal>
 			<div id="resize">

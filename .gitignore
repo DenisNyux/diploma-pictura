@@ -4,3 +4,4 @@ serv-pictura/package.json
 serv-pictura/package-lock.json
 client/package-lock.json
 serv-pictura/node_modules
+client/node_modules

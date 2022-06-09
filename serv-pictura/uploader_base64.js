@@ -42,11 +42,11 @@ router.post('/', async (req, res) => {
     }
 });
 
+// console.log(path.join(__dirname, req.query.path))
 
 router.delete('/*', (req, res) =>{
-    console.log(path.join(__dirname, req.body.path))
     try {
-        fs.unlinkSync(path.join(__dirname, req.body.path))
+        fs.unlinkSync(path.join(__dirname, req.query.path))
         res.status(200).send('Deleted successfully')
     }
     catch(er) {
@@ -56,11 +56,17 @@ router.delete('/*', (req, res) =>{
 
 // Запросы поворота изображения 
 router.get('/rotate', async (req, res) => {
-    
-    if (req.query.path && req.query.angle && !isNaN(Number(req.query.angle))) {
+    if (req.query.path 
+        && req.query.angle 
+        && !isNaN(Number(req.query.angle))
+        ) {
         try {
             const img = imageProcessor.bufFromFile(req.query.path)
-            const newImg = await imageProcessor.changeImage(img, 'rotateImage', [Number(req.query.angle)])
+            const newImg = await imageProcessor.changeImage(
+                img, 
+                'rotateImage', 
+                [Number(req.query.angle)]
+                );
             const responseResult = await imageProcessor.getImgWithMeta(newImg, req.query.image_name)
             res.status(200).json(responseResult)
         }
@@ -74,10 +80,15 @@ router.get('/rotate', async (req, res) => {
 });
 
 router.post('/rotate', async (req, res) => {
-    if (req.body.base64image && req.body.angle && !isNaN(Number(req.body.angle))) {
+    if (req.body.base64image 
+        && req.body.angle 
+        && !isNaN(Number(req.body.angle))) {
         try {
             const img = imageProcessor.getBuffer(req.body.base64image)
-            const newImg = await imageProcessor.changeImage(img, 'rotateImage', [Number(req.body.angle)])
+            const newImg = await imageProcessor.changeImage(img, 
+                'rotateImage', 
+                [Number(req.body.angle)]
+                );
             const responseResult = await imageProcessor.SaveImage(newImg)
             res.status(200).json(responseResult)
         }
@@ -99,6 +110,7 @@ router.get('/resize', async (req, res) => {
             const newImg = await imageProcessor.changeImage(img, 'resizeImage', [Number(req.query.kf)])
             const responseResult = await imageProcessor.getImgWithMeta(newImg, req.query.image_name)
             res.status(200).json(responseResult)
+            // console.log(responseResult)
         }
         catch(er) {
             res.status(400).send('400, Bad request '+ er)
@@ -239,6 +251,7 @@ router.get('/crop', async (req, res) => {
     ]
     if (req.query.path && params.every(x => !isNaN(x))){
         try {
+            console.log(req.query.path)
             const img = imageProcessor.bufFromFile(req.query.path)
             const newImg = await imageProcessor.changeImage(img, 'cropImage', params)
             const responseResult = await imageProcessor.getImgWithMeta(newImg, req.query.image_name)
@@ -265,6 +278,77 @@ router.post('/crop', async (req, res) => {
         try {
             const img = imageProcessor.getBuffer(req.body.base64image)
             const newImg = await imageProcessor.changeImage(img, 'cropImage', params)
+            const responseResult = await imageProcessor.SaveImage(newImg)
+            res.status(200).json(responseResult)
+        }
+        catch(er) {
+            res.status(406).send('400, Bad request'+er)
+        }
+    } else {
+        res.status(400).send('400, Bad request')
+    }
+});
+
+
+// Фильтры
+router.get('/filter/greyscale', async (req, res) => {  
+    if (req.query.path){
+        try {
+            const img = imageProcessor.bufFromFile(req.query.path)
+            const newImg = await imageProcessor.changeImage(img, 'greyscale')
+            const responseResult = await imageProcessor.getImgWithMeta(newImg, req.query.image_name)
+            res.status(200).json(responseResult)
+        }
+        catch(er) {
+            res.status(400).send('400, Bad request '+ er)
+        }
+    }
+    else {
+        res.send(200)
+    }
+    
+});
+
+router.post('/filter/greyscale', async (req, res) => {
+    if (req.body.base64image){
+        try {
+            const img = imageProcessor.getBuffer(req.body.base64image)
+            const newImg = await imageProcessor.changeImage(img, 'greyscale')
+            const responseResult = await imageProcessor.SaveImage(newImg)
+            res.status(200).json(responseResult)
+        }
+        catch(er) {
+            res.status(406).send('400, Bad request'+er)
+        }
+    } else {
+        res.status(400).send('400, Bad request')
+    }
+});
+
+
+router.get('/filter/negate', async (req, res) => {  
+    if (req.query.path){
+        try {
+            const img = imageProcessor.bufFromFile(req.query.path)
+            const newImg = await imageProcessor.changeImage(img, 'negate')
+            const responseResult = await imageProcessor.getImgWithMeta(newImg, req.query.image_name)
+            res.status(200).json(responseResult)
+        }
+        catch(er) {
+            res.status(400).send('400, Bad request '+ er)
+        }
+    }
+    else {
+        res.send(200)
+    }
+    
+});
+
+router.post('/filter/negate', async (req, res) => {
+    if (req.body.base64image){
+        try {
+            const img = imageProcessor.getBuffer(req.body.base64image)
+            const newImg = await imageProcessor.changeImage(img, 'negate')
             const responseResult = await imageProcessor.SaveImage(newImg)
             res.status(200).json(responseResult)
         }

@@ -67,7 +67,7 @@ async function getImgWithMeta(buf, fileName) {
     return {
         "img_name": fileName,
         "meta": meta,
-        "bs64img": buf.toString('base64')
+        "bs64string": buf.toString('base64')
     }
 }
 

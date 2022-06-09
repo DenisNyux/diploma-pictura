@@ -441,6 +441,13 @@ expand-template@^2.0.3:
   resolved "https://registry.yarnpkg.com/expand-template/-/expand-template-2.0.3.tgz#6e14b3fcee0f3a6340ecb57d2e8918692052a47c"
   integrity sha512-XYfuKMvj4O35f/pOXLObndIRvyQ+/+6AhODh+OKWj9S9498pHHn/IMszH+gt0fBCRWMNfk1ZSp5x3AifmnI2vg==
 
+express-static@^1.2.6:
+  version "1.2.6"
+  resolved "https://registry.yarnpkg.com/express-static/-/express-static-1.2.6.tgz#567aab6ba808386936b8c17bb0a90f6f61d0db4f"
+  integrity sha512-pmp8fSe+bCxGCTk5+X6HzIF2APYMvrAq3Y7sT/WOELc0JZZxJhMTVgCbxcoUgMRBSqnQ9EfTw/Uv3J1ONoIAuA==
+  dependencies:
+    mime2 latest
+
 express@^4.17.3:
   version "4.17.3"
   resolved "https://registry.yarnpkg.com/express/-/express-4.17.3.tgz#f6c7302194a4fb54271b73a1fe7a06478c8f85a1"
@@ -829,6 +836,11 @@ mime-types@~2.1.24, mime-types@~2.1.34:
   integrity sha512-6cP692WwGIs9XXdOO4++N+7qjqv0rqxxVvJ3VHPh/Sc9mVZcQP+ZGhkKiTvWMQRr2tbHkJP/Yn7Y0npb3ZBs4A==
   dependencies:
     mime-db "1.51.0"
+
+mime2@latest:
+  version "0.0.11"
+  resolved "https://registry.yarnpkg.com/mime2/-/mime2-0.0.11.tgz#ae75a1386114ffd51d9e97c481464318e97d87c5"
+  integrity sha512-Ch599Y8U4vUgG9AaQgLEnIdXRRLoZPfjAdWFDLYePBEJS1nsS43H2pzbZn0u8lkbYx+yInuKxLsUEgM3fa9ZLQ==
 
 mime@1.6.0:
   version "1.6.0"
